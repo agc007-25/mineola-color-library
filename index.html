@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mineola Knit — Color Palette Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#EFE8DA; --ink:#2A2620; --ink-soft:#5C564A; --line:#D2C7AC; --accent:#1D5E66; --accent-soft:#3E7B80; --card:#FBF8F1; --toast:#2A2620; }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); background-image:radial-gradient(circle at 1px 1px, rgba(42,38,32,0.05) 1px, transparent 0); background-size:22px 22px; color:var(--ink); font-family:'DM Sans', sans-serif; min-height:100vh; }
+  header{ padding:48px 32px 20px; max-width:1100px; margin:0 auto; border-bottom:1px solid var(--line); }
+  .eyebrow{ font-family:'DM Mono', monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  h1{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(30px, 4vw, 44px); margin:0 0 10px; letter-spacing:-0.01em; }
+  header p{ max-width:620px; color:var(--ink-soft); line-height:1.55; font-size:15px; margin:0 0 28px; }
+  .steps{ list-style:none; counter-reset:step; max-width:620px; margin:0 0 28px; padding:0; display:flex; flex-wrap:wrap; gap:10px 28px; }
+  .steps li{ counter-increment:step; color:var(--ink-soft); font-size:15px; line-height:1.5; display:flex; align-items:baseline; gap:9px; }
+  .steps li::before{ content:counter(step); font-family:'DM Mono', monospace; font-size:12px; font-weight:500; color:var(--paper); background:var(--accent); width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .controls{ max-width:1100px; margin:0 auto; padding:24px 32px 0; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .tabs{ display:flex; flex-wrap:wrap; gap:8px; flex:1; }
+  .tab{ font-family:'DM Mono', monospace; font-size:12.5px; letter-spacing:0.02em; padding:9px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft); cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+  .tab:hover{ border-color:var(--accent-soft); color:var(--ink); }
+  .tab.active{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  .search{ font-family:'DM Sans', sans-serif; font-size:14px; padding:10px 16px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); min-width:200px; outline:none; }
+  .search:focus{ border-color:var(--accent); }
+  .search::placeholder{ color:#A79E8B; }
+  main{ max-width:1100px; margin:0 auto; padding:28px 32px 80px; }
+  .fiber-heading{ font-family:'DM Mono', monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin:8px 0 16px; }
+  .fiber-heading b{ color:var(--ink); font-weight:500; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr)); gap:14px; }
+  .chip{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .12s ease, box-shadow .12s ease; position:relative; }
+  .chip:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(42,38,32,0.12); }
+  .swatch{ height:88px; width:100%; position:relative; border-bottom:1px solid rgba(0,0,0,0.06); }
+  .meta{ padding:10px 12px 12px; }
+  .name{ font-size:13px; font-weight:500; line-height:1.25; margin-bottom:4px; min-height:32px; }
+  .hex{ font-family:'DM Mono', monospace; font-size:11.5px; color:var(--ink-soft); letter-spacing:0.02em; }
+  .empty{ color:var(--ink-soft); font-size:14px; padding:40px 0; text-align:center; }
+  .toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--toast); color:var(--paper); font-family:'DM Mono', monospace; font-size:13px; padding:12px 20px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; box-shadow:0 10px 30px rgba(0,0,0,0.25); }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  footer{ max-width:1100px; margin:0 auto; padding:0 32px 48px; color:var(--ink-soft); font-size:12.5px; font-family:'DM Mono', monospace; }
+  @media (max-width:600px){ header{padding:32px 20px 16px;} .controls{padding:20px 20px 0;} main{padding:20px 20px 60px;} footer{padding:0 20px 40px;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Mineola Knit &middot; est. 2018</div>
+  <h1>Color Palette Library</h1>
+  <ol class="steps">
+    <li>Select fiber</li>
+    <li>Click color chip</li>
+    <li>Copy hex code into your design software</li>
+  </ol>
+</header>
+<div class="controls">
+  <div class="tabs" id="tabs"></div>
+  <input class="search" id="search" type="text" placeholder="Search color name or hex…">
+</div>
+<main id="main"></main>
+<footer>mineolaknit.com &middot; click any swatch to copy its hex code</footer>
+<div class="toast" id="toast"></div>
+<script>
+const FIBERS = [{"key": "Cotton_CM_2024_R1", "display": "Combed Cotton", "colors": [{"name": "Black", "hex": "#1E1E20"}, {"name": "Bleach Wht", "hex": "#FFFFFF"}, {"name": "Camel", "hex": "#D3A98A"}, {"name": "Carrot", "hex": "#E15139"}, {"name": "Cocoa", "hex": "#614F41"}, {"name": "Dk Aqua RL", "hex": "#1E565A"}, {"name": "Greggio", "hex": "#FCF6E5"}, {"name": "Lt Grey", "hex": "#D7D8D0"}, {"name": "Mango Mojito", "hex": "#D9A040"}, {"name": "Navy", "hex": "#323B4C"}, {"name": "Oatmeal", "hex": "#DAB194"}, {"name": "Oyster RL", "hex": "#CFC3B1"}, {"name": "Parot Green", "hex": "#90B35A"}, {"name": "Pergamena", "hex": "#F1D8BA"}, {"name": "Pink Salt", "hex": "#F2D0C4"}, {"name": "Piombo", "hex": "#555358"}, {"name": "Poseidon", "hex": "#30455F"}, {"name": "Rust RL", "hex": "#94592B"}, {"name": "Sky Blue", "hex": "#BED6EE"}, {"name": "Slate Blue RL", "hex": "#5D6D7C"}, {"name": "Stillwater", "hex": "#6CA1AB"}, {"name": "Turquoise RL", "hex": "#6C898A"}]}, {"key": "Egyptian_2022", "display": "Egyptian Cotton", "colors": [{"name": "Ashleigh Blue", "hex": "#6A87AD"}, {"name": "Carousel NEW", "hex": "#F5BEC8"}, {"name": "Carousel OLD", "hex": "#E8B8C0"}, {"name": "Charcoal", "hex": "#686C6F"}, {"name": "Cherry NEW", "hex": "#9D1C31"}, {"name": "Cherry OLD", "hex": "#A02F3C"}, {"name": "Citron NEW", "hex": "#D5AF65"}, {"name": "Citron OLD", "hex": "#D7AE5F"}, {"name": "Copper", "hex": "#C77F36"}, {"name": "Coral", "hex": "#DA7B70"}, {"name": "Driftwood", "hex": "#A0938C"}, {"name": "Eden", "hex": "#264E33"}, {"name": "Grain", "hex": "#DECDB5"}, {"name": "Hawaii Sunset", "hex": "#B95D13"}, {"name": "Kentucky Blue", "hex": "#A5B3CC"}, {"name": "Lavender", "hex": "#BFB4D8"}, {"name": "Mahogany", "hex": "#5D4942"}, {"name": "Meteorite", "hex": "#393D42"}, {"name": "Midnight", "hex": "#313547"}, {"name": "Monument", "hex": "#9AA8AA"}, {"name": "Ocean NEW", "hex": "#25406D"}, {"name": "Ocean OLD", "hex": "#586E8D"}, {"name": "Pesto", "hex": "#586032"}, {"name": "Pumice NEW", "hex": "#F3E8DD"}, {"name": "Pumice OLD", "hex": "#E1D8C9"}, {"name": "Raisin", "hex": "#67454D"}, {"name": "Sea Green", "hex": "#B9C4B5"}, {"name": "Sky", "hex": "#BECDDC"}, {"name": "Slate", "hex": "#5E5145"}, {"name": "Snow White", "hex": "#F7F7F9"}, {"name": "Spring", "hex": "#A5B374"}, {"name": "Stable", "hex": "#CBB8A3"}, {"name": "Stone NEW", "hex": "#BDB6AB"}, {"name": "Stone OLD", "hex": "#C6BFB8"}, {"name": "Teal", "hex": "#567676"}, {"name": "Tulip", "hex": "#CE3773"}, {"name": "Umber", "hex": "#916A55"}, {"name": "Vapor", "hex": "#BBC9C7"}, {"name": "Whale", "hex": "#8E9EA1"}]}, {"key": "Merino_Wool_2022_", "display": "Merino Wool", "colors": [{"name": "Apple", "hex": "#C02025"}, {"name": "Aqua", "hex": "#1A82B5"}, {"name": "Black", "hex": "#37383C"}, {"name": "Burgundy", "hex": "#7E223C"}, {"name": "Chestnut", "hex": "#A66F52"}, {"name": "Clover", "hex": "#0B8644"}, {"name": "Denim", "hex": "#59697D"}, {"name": "Espresso", "hex": "#4B3F3A"}, {"name": "Flint", "hex": "#69625B"}, {"name": "Fog", "hex": "#9C9D9A"}, {"name": "Gold Yellow", "hex": "#F4C531"}, {"name": "Merlot", "hex": "#814540"}, {"name": "Mint", "hex": "#C1E1C1"}, {"name": "Navy", "hex": "#3A3B4E"}, {"name": "Oatmeal", "hex": "#FBDCBD"}, {"name": "Ochre", "hex": "#BE8031"}, {"name": "Pale Pink", "hex": "#E8CACA"}, {"name": "Peach", "hex": "#DA875B"}, {"name": "Peacock", "hex": "#1D5D65"}, {"name": "Peony", "hex": "#CE7590"}, {"name": "Pepper (Charcoal)", "hex": "#4A4A45"}, {"name": "Pine", "hex": "#55624C"}, {"name": "Powder", "hex": "#9EBCD6"}, {"name": "Raw", "hex": "#EFEEDE"}, {"name": "Royal", "hex": "#233878"}, {"name": "Sage", "hex": "#8A9D92"}, {"name": "Sahara", "hex": "#DDB58F"}, {"name": "Taupe", "hex": "#ADA193"}, {"name": "Tomato", "hex": "#E74241"}, {"name": "Wisteria", "hex": "#B293AA"}]}, {"key": "Organic_Cotton_2022", "display": "Organic Cotton", "colors": [{"name": "Apricot", "hex": "#F2932E"}, {"name": "Aquamarine", "hex": "#A2CADE"}, {"name": "Barn Red", "hex": "#82433C"}, {"name": "Cloud Dance", "hex": "#F5F6F8"}, {"name": "Delft", "hex": "#42699E"}, {"name": "French Vanilla NEW", "hex": "#F8E199"}, {"name": "French Vanilla OLD", "hex": "#FAE185"}, {"name": "Garden Green", "hex": "#495D34"}, {"name": "Grape SI", "hex": "#A792BC"}, {"name": "Gull Grey NEW", "hex": "#5E5E60"}, {"name": "Gull Grey OLD", "hex": "#625E60"}, {"name": "Juniper", "hex": "#7E978E"}, {"name": "Kelp", "hex": "#859869"}, {"name": "Lavender Mist NEW", "hex": "#D2ACCE"}, {"name": "Lavender Mist OLD", "hex": "#C59FB9"}, {"name": "Lunar Rock", "hex": "#ABB4B3"}, {"name": "Mocha Mouse NEW", "hex": "#9E6451"}, {"name": "Mocha Mouse OLD", "hex": "#B37358"}, {"name": "Mustard NEW", "hex": "#D29D41"}, {"name": "Mustard OLD", "hex": "#B08C50"}, {"name": "Navy", "hex": "#66648B"}, {"name": "Pearl NEW", "hex": "#FAD2DC"}, {"name": "Pearl OLD", "hex": "#F2D0C6"}, {"name": "Powder Pink NEW", "hex": "#F0A7AB"}, {"name": "Powder Pink OLD", "hex": "#F5A9A5"}, {"name": "Sand", "hex": "#E7BF90"}, {"name": "Santorini Blue SI", "hex": "#6DA3D5"}, {"name": "Spicy Orange", "hex": "#E1513A"}, {"name": "Sunshine SI", "hex": "#FFD878"}, {"name": "Tango Red", "hex": "#AC0D2D"}]}, {"key": "Recycled_Cotton_Combined", "display": "Recycled Cotton", "colors": [{"name": "Aluminum", "hex": "#AEB2B5"}, {"name": "Autumn", "hex": "#AB917C"}, {"name": "Azurro Cielo", "hex": "#BED6EE"}, {"name": "Beige", "hex": "#BB9C76"}, {"name": "Bleach", "hex": "#F1F0EB"}, {"name": "Blu Marine", "hex": "#323B4C"}, {"name": "Blue Jeans", "hex": "#626878"}, {"name": "Bordeaux", "hex": "#6D3445"}, {"name": "Bottle Green", "hex": "#325C53"}, {"name": "Bruciato", "hex": "#654A3E"}, {"name": "Burgundy", "hex": "#5D2A32"}, {"name": "Camel", "hex": "#D3A98A"}, {"name": "Cardinal", "hex": "#632D5B"}, {"name": "Cherry", "hex": "#BD152D"}, {"name": "Coral", "hex": "#EE5F4B"}, {"name": "Cornflower", "hex": "#ADBDD6"}, {"name": "Daffodil", "hex": "#F1DE9D"}, {"name": "Flame", "hex": "#F89257"}, {"name": "Flax", "hex": "#D0C5B2"}, {"name": "Giallo Medio", "hex": "#FFCC52"}, {"name": "Greggio", "hex": "#F2ECDB"}, {"name": "Grey 311", "hex": "#646466"}, {"name": "Hunter Green", "hex": "#435E4E"}, {"name": "Jade", "hex": "#129489"}, {"name": "Jeans", "hex": "#6E7486"}, {"name": "Jet Black", "hex": "#29282D"}, {"name": "Marine", "hex": "#2B2E43"}, {"name": "Nero", "hex": "#1E1E20"}, {"name": "Oatmeal", "hex": "#BAA584"}, {"name": "Pergamena", "hex": "#EBDAB5"}, {"name": "Pesco", "hex": "#E88353"}, {"name": "Piombo", "hex": "#515254"}, {"name": "Pistacchio", "hex": "#A3A969"}, {"name": "Purple", "hex": "#503E74"}, {"name": "Rosa Chiaro", "hex": "#FADBE7"}, {"name": "Rosso", "hex": "#A91F32"}, {"name": "Royal Hickory", "hex": "#1B508F"}, {"name": "Rugiada", "hex": "#C3C2C6"}, {"name": "Saffron", "hex": "#AE3E47"}, {"name": "Seafoam", "hex": "#52B0AE"}, {"name": "Spice", "hex": "#B65F4B"}, {"name": "Turchese", "hex": "#159DCD"}, {"name": "Turquesa", "hex": "#009CAE"}, {"name": "Vapor", "hex": "#5C899C"}, {"name": "Verde", "hex": "#608259"}, {"name": "Verde Acqua", "hex": "#A1D8BE"}, {"name": "Verde Bandiera", "hex": "#088758"}, {"name": "Winter White", "hex": "#F3ECE1"}]}];
+let activeFiber = FIBERS[0].key;
+let query = '';
+const tabsEl = document.getElementById('tabs');
+const mainEl = document.getElementById('main');
+const searchEl = document.getElementById('search');
+const toastEl = document.getElementById('toast');
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  FIBERS.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (f.key === activeFiber ? ' active' : '');
+    btn.textContent = f.display;
+    btn.onclick = () => { activeFiber = f.key; render(); };
+    tabsEl.appendChild(btn);
+  });
+}
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1400);
+}
+function fallbackCopy(text){
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch(e) { return false; }
+}
+function copyHex(hex){
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(hex).then(() => showToast(hex + ' copied to clipboard'))
+      .catch(() => showToast(fallbackCopy(hex) ? (hex + ' copied to clipboard') : hex));
+  } else {
+    showToast(fallbackCopy(hex) ? (hex + ' copied to clipboard') : hex);
+  }
+}
+function render(){
+  renderTabs();
+  const fiber = FIBERS.find(f => f.key === activeFiber);
+  const q = query.trim().toLowerCase();
+  const colors = fiber.colors.filter(c => !q || c.name.toLowerCase().includes(q) || c.hex.toLowerCase().includes(q));
+  mainEl.innerHTML = '';
+  const heading = document.createElement('div');
+  heading.className = 'fiber-heading';
+  heading.innerHTML = '<b>' + fiber.display + '</b> &nbsp;\u00b7&nbsp; ' + colors.length + ' of ' + fiber.colors.length + ' colors';
+  mainEl.appendChild(heading);
+  if(colors.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'No colors match "' + query + '" in ' + fiber.display + '.';
+    mainEl.appendChild(empty);
+    return;
+  }
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  colors.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.onclick = () => copyHex(c.hex);
+    const sw = document.createElement('div');
+    sw.className = 'swatch';
+    sw.style.background = c.hex;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = '<div class="name">' + c.name + '</div><div class="hex">' + c.hex + '</div>';
+    chip.appendChild(sw);
+    chip.appendChild(meta);
+    grid.appendChild(chip);
+  });
+  mainEl.appendChild(grid);
+}
+searchEl.addEventListener('input', (e) => { query = e.target.value; render(); });
+render();
+</script>
+</body>
+</html>
