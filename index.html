@@ -1,143 +1,2511 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mineola Knit — Color Palette Library</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>BaubleBar Personalizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=DM+Mono:wght@400;500&amp;family=DM+Sans:wght@300;400;500&amp;display=swap" rel="stylesheet">
+<!-- Google Identity & API -->
+<script src="https://accounts.google.com/gsi/client" async="" defer=""></script>
+<script src="https://apis.google.com/js/api.js" async="" defer=""></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-psd@17/dist/bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
-  :root{ --paper:#EFE8DA; --ink:#2A2620; --ink-soft:#5C564A; --line:#D2C7AC; --accent:#1D5E66; --accent-soft:#3E7B80; --card:#FBF8F1; --toast:#2A2620; }
-  *{box-sizing:border-box;}
-  body{ margin:0; background:var(--paper); background-image:radial-gradient(circle at 1px 1px, rgba(42,38,32,0.05) 1px, transparent 0); background-size:22px 22px; color:var(--ink); font-family:'DM Sans', sans-serif; min-height:100vh; }
-  header{ padding:48px 32px 20px; max-width:1100px; margin:0 auto; border-bottom:1px solid var(--line); }
-  .eyebrow{ font-family:'DM Mono', monospace; font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
-  h1{ font-family:'Fraunces', serif; font-weight:500; font-size:clamp(30px, 4vw, 44px); margin:0 0 10px; letter-spacing:-0.01em; }
-  header p{ max-width:620px; color:var(--ink-soft); line-height:1.55; font-size:15px; margin:0 0 28px; }
-  .steps{ list-style:none; counter-reset:step; max-width:620px; margin:0 0 28px; padding:0; display:flex; flex-wrap:wrap; gap:10px 28px; }
-  .steps li{ counter-increment:step; color:var(--ink-soft); font-size:15px; line-height:1.5; display:flex; align-items:baseline; gap:9px; }
-  .steps li::before{ content:counter(step); font-family:'DM Mono', monospace; font-size:12px; font-weight:500; color:var(--paper); background:var(--accent); width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .controls{ max-width:1100px; margin:0 auto; padding:24px 32px 0; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .tabs{ display:flex; flex-wrap:wrap; gap:8px; flex:1; }
-  .tab{ font-family:'DM Mono', monospace; font-size:12.5px; letter-spacing:0.02em; padding:9px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink-soft); cursor:pointer; transition:all .15s ease; white-space:nowrap; }
-  .tab:hover{ border-color:var(--accent-soft); color:var(--ink); }
-  .tab.active{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
-  .search{ font-family:'DM Sans', sans-serif; font-size:14px; padding:10px 16px; border-radius:999px; border:1px solid var(--line); background:var(--card); color:var(--ink); min-width:200px; outline:none; }
-  .search:focus{ border-color:var(--accent); }
-  .search::placeholder{ color:#A79E8B; }
-  main{ max-width:1100px; margin:0 auto; padding:28px 32px 80px; }
-  .fiber-heading{ font-family:'DM Mono', monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft); margin:8px 0 16px; }
-  .fiber-heading b{ color:var(--ink); font-weight:500; }
-  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px, 1fr)); gap:14px; }
-  .chip{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .12s ease, box-shadow .12s ease; position:relative; }
-  .chip:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(42,38,32,0.12); }
-  .swatch{ height:88px; width:100%; position:relative; border-bottom:1px solid rgba(0,0,0,0.06); }
-  .meta{ padding:10px 12px 12px; }
-  .name{ font-size:13px; font-weight:500; line-height:1.25; margin-bottom:4px; min-height:32px; }
-  .hex{ font-family:'DM Mono', monospace; font-size:11.5px; color:var(--ink-soft); letter-spacing:0.02em; }
-  .empty{ color:var(--ink-soft); font-size:14px; padding:40px 0; text-align:center; }
-  .toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--toast); color:var(--paper); font-family:'DM Mono', monospace; font-size:13px; padding:12px 20px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; box-shadow:0 10px 30px rgba(0,0,0,0.25); }
-  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  footer{ max-width:1100px; margin:0 auto; padding:0 32px 48px; color:var(--ink-soft); font-size:12.5px; font-family:'DM Mono', monospace; }
-  @media (max-width:600px){ header{padding:32px 20px 16px;} .controls{padding:20px 20px 0;} main{padding:20px 20px 60px;} footer{padding:0 20px 40px;} }
+:root{--bg:#f4f1eb;--surface:#ffffff;--surface2:#ede9e1;--border:#d4cfc4;--accent:#1a1a1a;--accent2:#3a3a3a;--text:#1a1a1a;--muted:#8a8278;--success:#3d8b52;--warn:#b8621a;--error:#c0392b;--info:#2e6fa3;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+.header{background:var(--surface);border-bottom:2px solid var(--accent);padding:14px 24px;display:flex;align-items:center;gap:12px;}
+.header-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--accent);}
+.header-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.badge{margin-left:auto;background:var(--accent);color:#ffffff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:11px;padding:3px 9px;border-radius:2px;}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);}
+.tab{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;padding:10px 20px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;height:calc(100vh - 94px);}
+.tab-content.active{display:flex;}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);width:300px;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto;}
+.section{padding:14px;border-bottom:1px solid var(--border);}
+.sec-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.step{background:var(--accent);color:#ffffff;font-size:9px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;flex-shrink:0;}
+.drop-zone{border:1px dashed var(--border);border-radius:3px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(0,0,0,.04);}
+.drop-zone input{display:none;}
+.dz-icon{font-size:18px;margin-bottom:3px;}
+.dz-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.dz-hint{font-size:9px;color:var(--success);margin-top:2px;}
+.cached-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(90,171,110,.1);border:1px solid rgba(90,171,110,.3);border-radius:3px;padding:5px 9px;margin-top:6px;font-family:'DM Mono',monospace;font-size:10px;color:var(--success);}
+.clear-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:2px;cursor:pointer;transition:all .2s;}
+.clear-btn:hover{border-color:var(--error);color:var(--error);}
+.file-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;}
+.pill{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:2px 6px;font-family:'DM Mono',monospace;font-size:9px;display:flex;align-items:center;gap:3px;}
+.pdot{width:4px;height:4px;border-radius:50%;}
+.pdot.ok{background:var(--success);}
+.pdot.warn{background:var(--warn);}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:7px;text-align:center;}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;}
+.stat-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+.process-btn{margin:14px;padding:12px;background:var(--accent);color:#ffffff;border:none;border-radius:3px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;cursor:pointer;width:calc(100% - 28px);transition:all .2s;}
+.process-btn:hover:not(:disabled){background:var(--accent2);}
+.process-btn:disabled{opacity:.4;cursor:not-allowed;}
+.dl-btn{display:block;margin:0 14px 12px;padding:10px;background:var(--success);color:#fff;border:none;border-radius:3px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;text-align:center;text-decoration:none;}
+.prog-wrap{margin:0 14px 12px;display:none;}
+.prog-bg{background:var(--surface2);border:1px solid var(--border);border-radius:2px;height:4px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);width:0%;transition:width .3s;border-radius:2px;}
+.prog-text{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.table-wrap{flex:1;overflow-y:auto;padding:16px 20px;}
+.table-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.table-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;}
+.table-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:2px solid var(--accent);}
+th{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--accent);padding:6px 9px;text-align:left;font-weight:400;}
+td{padding:6px 9px;font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:rgba(0,0,0,.03);}
+.sbadge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:2px;font-size:9px;font-family:'DM Mono',monospace;}
+.sbadge.pending{background:rgba(136,136,136,.15);color:var(--muted);}
+.sbadge.created{background:rgba(90,171,110,.15);color:var(--success);}
+.sbadge.skipped{background:rgba(232,147,74,.15);color:var(--warn);}
+.sbadge.error{background:rgba(232,90,90,.15);color:var(--error);}
+.sbadge.processing{background:rgba(46,111,163,.15);color:var(--info);}
+.sdot{width:4px;height:4px;border-radius:50%;background:currentColor;}
+.log{background:var(--surface);border-top:1px solid var(--border);height:110px;overflow-y:auto;padding:8px 20px;}
+.log-entry{font-family:'DM Mono',monospace;font-size:9px;padding:2px 0;display:flex;gap:8px;}
+.log-time{color:var(--muted);flex-shrink:0;}
+.log-msg.ok{color:var(--success);}
+.log-msg.warn{color:var(--warn);}
+.log-msg.err{color:var(--error);}
+.log-msg.info{color:var(--text);}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:220px;color:var(--muted);gap:8px;}
+.empty .ei{font-size:36px;opacity:.25;}
+.empty .et{font-family:'DM Mono',monospace;font-size:11px;}
+/* Calibration Tab */
+.cal-wrap{flex:1;padding:24px;overflow-y:auto;max-width:700px;}
+.cal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+.cal-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.cal-drop{border:1px dashed var(--border);border-radius:3px;padding:20px;text-align:center;cursor:pointer;background:var(--surface2);transition:all .2s;}
+.cal-drop:hover,.cal-drop.dragover{border-color:var(--accent);background:rgba(0,0,0,.04);}
+.cal-drop input{display:none;}
+.cal-drop .cd-icon{font-size:28px;margin-bottom:6px;}
+.cal-drop .cd-label{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--accent);}
+.cal-drop .cd-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;}
+.cal-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
+.field-group label{display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;}
+.field-group input,.field-group select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:6px 8px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;}
+.field-group input:focus,.field-group select:focus{outline:none;border-color:var(--accent);}
+.cal-btn{padding:10px 24px;background:var(--accent);color:#ffffff;border:none;border-radius:3px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer;margin-right:8px;}
+.cal-btn:disabled{opacity:.4;cursor:not-allowed;}
+.cal-result{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:14px;margin-top:16px;display:none;}
+.cal-result-title{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--accent);margin-bottom:8px;}
+.cal-code{font-family:'DM Mono',monospace;font-size:10px;line-height:1.8;white-space:pre-wrap;color:var(--text);}
+.copy-btn{float:right;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;border-radius:2px;cursor:pointer;}
+/* ── Auth Overlay ── */
+#authOverlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#authOverlay.hidden{display:none;}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:4px;color:var(--accent);}
+.auth-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:32px 40px;display:flex;flex-direction:column;align-items:center;gap:16px;max-width:360px;width:90%;}
+.auth-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:center;min-height:16px;}
+.auth-status.err{color:var(--error);}
+.auth-status.ok{color:var(--success);}
+.auth-user{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:8px 12px;width:100%;}
+.auth-avatar{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);}
+.auth-name{font-family:'DM Mono',monospace;font-size:10px;}
+.signout-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:3px 8px;border-radius:2px;cursor:pointer;margin-left:auto;}
+.signout-btn:hover{border-color:var(--error);color:var(--error);}
+/* Drive Sync */
+.drive-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(90,171,110,.07);border-bottom:1px solid var(--border);}
+.drive-status{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);flex:1;}
+.sync-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:9px;padding:4px 10px;border-radius:2px;cursor:pointer;white-space:nowrap;transition:all .2s;}
+.sync-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.sync-btn:disabled{opacity:.4;cursor:not-allowed;}
+.user-chip{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.user-chip img{width:18px;height:18px;border-radius:50%;}
+.user-chip span{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);}
+/* Client Selector */
+.client-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:12px;}
+.client-label{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:var(--accent);}
+.client-select{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:6px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;min-width:200px;}
+.client-select:focus{outline:none;border-color:var(--accent);}
+.client-badge{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-left:4px;}
+/* Setup banner */
+.setup-banner{background:rgba(232,147,74,.1);border:1px solid rgba(232,147,74,.4);border-radius:3px;padding:10px 14px;margin:10px 14px;font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);line-height:1.7;display:none;}
+.setup-banner.visible{display:block;}
+
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.spinner{display:inline-block;width:7px;height:7px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:3px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── ADMIN PANEL ── */
+#adminOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;}
+#adminOverlay.open{display:flex;}
+#adminBox{background:var(--surface);border:2px solid var(--accent);border-radius:4px;padding:28px 32px;width:340px;display:flex;flex-direction:column;gap:14px;}
+#adminBox h2{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;}
+#adminPwInput{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-family:'DM Mono',monospace;font-size:13px;background:var(--surface2);}
+#adminPwErr{font-family:'DM Mono',monospace;font-size:10px;color:var(--error);display:none;}
+.admin-pw-btns{display:flex;gap:8px;}
+.admin-pw-btns button{flex:1;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;border:none;border-radius:3px;cursor:pointer;}
+#adminPwOk{background:var(--accent);color:#fff;}
+#adminPwCancel{background:var(--surface2);border:1px solid var(--border) !important;color:var(--accent);}
+
+/* admin tab content */
+#tab-admin{flex-direction:column;overflow-y:auto;padding:24px;}
+.admin-hdr{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.admin-client-sel{font-family:'DM Mono',monospace;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:3px;background:var(--surface2);}
+.tmpl-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:12px;overflow:hidden;}
+.tmpl-card-hdr{background:var(--surface2);padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.tmpl-card-body{padding:14px;display:none;flex-wrap:wrap;gap:10px;}
+.tmpl-card-body.open{display:flex;}
+.param-group{display:flex;flex-direction:column;gap:3px;min-width:80px;}
+.param-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.param-input{width:80px;padding:5px 7px;border:1px solid var(--border);border-radius:3px;font-family:'DM Mono',monospace;font-size:12px;background:var(--surface2);text-align:center;}
+.param-input:focus{outline:none;border-color:var(--accent);}
+.zone-divider{width:100%;border:none;border-top:1px dashed var(--border);margin:6px 0;}
+.export-btn{padding:12px 28px;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:3px;cursor:pointer;margin-top:8px;}
+.export-btn:hover{background:var(--accent2);}
+.admin-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;}
+
 </style>
 </head>
 <body>
-<header>
-  <div class="eyebrow">Mineola Knit &middot; est. 2018</div>
-  <h1>Color Palette Library</h1>
-  <ol class="steps">
-    <li>Select fiber</li>
-    <li>Click color chip</li>
-    <li>Copy hex code into your design software</li>
-  </ol>
-</header>
-<div class="controls">
-  <div class="tabs" id="tabs"></div>
-  <input class="search" id="search" type="text" placeholder="Search color name or hex…">
+<!-- Auth Overlay -->
+<div id="authOverlay" class="hidden">
+  <div class="auth-logo">BaubleBar Personalizer</div>
+  <div class="auth-sub">SIGN IN TO CONTINUE</div>
+  <div class="auth-card">
+    <div id="authStatus" class="auth-status err">Google Sign-In failed to load — check your internet connection.</div>
+    <div id="googleSignInBtn"></div>
+    <div style="width:100%;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin:4px 0;">— or sign in with work password —</div>
+    <div style="display:flex;gap:6px;width:100%;">
+      <input type="password" id="workPwInput" placeholder="Work password" onkeydown="if(event.key==='Enter')checkWorkPw()" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:3px;font-family:'DM Mono',monospace;font-size:12px;background:var(--surface2);">
+      <button onclick="checkWorkPw()" style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:3px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;">GO</button>
+    </div>
+    <div id="workPwErr" style="display:none;font-family:'DM Mono',monospace;font-size:10px;color:var(--error);">Incorrect password.</div></div></div>
+    <div id="authUserChip" style="display:none;width:100%;flex-direction:column;gap:8px">
+      <div class="auth-user">
+        <img id="authAvatar" class="auth-avatar" src="">
+        <div class="auth-name" id="authNameLabel"></div>
+        <button class="signout-btn" onclick="signOut()">SIGN OUT</button>
+      </div>
+    </div>
+  </div>
 </div>
-<main id="main"></main>
-<footer>mineolaknit.com &middot; click any swatch to copy its hex code</footer>
-<div class="toast" id="toast"></div>
+
+<div class="header">
+  <div><div class="header-title">BaubleBar Personalizer</div><div class="header-sub">Multi-Client Blanket · Batch TIF Generator</div></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+    <div id="headerUserChip" class="user-chip" style="display: flex;">
+      <img id="headerAvatar" src="https://lh3.googleusercontent.com/a/ACg8ocL1ff5b9cyCQmVgWhFh3mbdYS1O4KppZ8Pdrqest2ChF3ZsKjzbPA=s96-c"><span id="headerName">Andy Concilio</span>
+      <button class="signout-btn" onclick="signOut()">SIGN OUT</button>
+    </div>
+    <div class="badge" id="sizeBadge">BAUBLEBAR</div>
+  </div>
+</div>
+
+<!-- Drive Sync Bar -->
+<div class="drive-bar" id="driveBar">
+  <span style="font-size:12px">☁</span>
+  <span class="drive-status" id="driveStatusText">☁ Sync complete — 15 templates, 12 fonts</span>
+  <button class="sync-btn" id="syncBtn" onclick="syncFromDrive()">⟳ SYNC FROM DRIVE</button>
+</div>
+
+<!-- Client Selector Bar -->
+<div class="client-bar" id="clientBar" style="display: flex;">
+  <span class="client-label">Client</span>
+  <select class="client-select" id="clientSelect" onchange="selectClient(this.value)"><option value="">— Select a client —</option><option value="BaubleBar">BaubleBar</option><option value="In2Green">In2Green</option><option value="Butterscotch">Butterscotch</option></select>
+  <span class="client-badge" id="clientBadge">14 templates configured</span>
+</div>
+
+<div class="setup-banner" id="setupBanner">
+  ⚠ SETUP REQUIRED — Open this file and fill in the config at the top of the &lt;script&gt; block:<br>
+  • GOOGLE_CONFIG.CLIENT_ID — from Google Cloud Console → Auth Platform → Clients<br>
+  • GOOGLE_CONFIG.WHITELIST_SHEET — the Google Sheet ID containing approved emails<br>
+  • CLIENT_REGISTRY[client].driveFolder — the Drive subfolder ID for each client
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('process')">PROCESS ORDERS</div>
+  <div class="tab" onclick="switchTab('quicktest')">QUICK TEST</div>
+  <div class="tab" onclick="switchTab('calibrate')">ADD NEW TEMPLATE</div>
+  <div class="tab" onclick="promptAdminLogin()">⚙ ADMIN</div>
+</div>
+
+<!-- ── PROCESS TAB ── -->
+<div class="tab-content active" id="tab-process">
+  <div class="sidebar">
+    <div class="section">
+      <div class="sec-label"><span style="display:flex;align-items:center;gap:6px"><span class="step">1</span>ORDER SPREADSHEET</span></div>
+      <div class="drop-zone" id="xlsxDrop" onclick="document.getElementById('xlsxInput').click()">
+        <input type="file" id="xlsxInput" accept=".xlsx,.xls" onchange="handleXlsx(this.files[0])">
+        <div class="dz-icon">📊</div><div class="dz-text">Drop spreadsheet here</div><div class="dz-hint">Upload fresh each run</div>
+      </div>
+      <div id="xlsxPills" class="file-pills"><div class="pill"><span class="pdot ok"></span>MTO Order Tracker_EG_Custom Blankets_4.27.26.xlsx — 7 orders</div></div>
+    </div>
+    <div class="section">
+      <div class="sec-label"><span style="display:flex;align-items:center;gap:6px"><span class="step">2</span>TEMPLATES &amp; FONTS</span><button class="clear-btn" onclick="clearCache()">CLEAR</button></div>
+      <div class="drop-zone" id="folderDrop" onclick="document.getElementById('folderInput').click()">
+        <input type="file" id="folderInput" multiple="" accept=".psd,.bmp,.ttf,.otf,.TTF,.OTF" onchange="handleFolder(this.files)">
+        <div class="dz-icon">📁</div><div class="dz-text">Select PSDs / BMPs + fonts</div><div class="dz-hint">✓ Remembered between sessions</div>
+      </div>
+      <div style="margin-top:6px;text-align:center">
+        <span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted)">or drop entire folder → </span>
+        <label style="font-family:DM Mono,monospace;font-size:9px;color:var(--accent);cursor:pointer;text-decoration:underline">
+          Browse Folder<input type="file" id="folderDirInput" multiple="" webkitdirectory="" style="display:none" onchange="handleFolder(this.files)">
+        </label>
+      </div>
+      <div id="cachedBar" style="display: flex;" class="cached-bar"><span>✓ CACHED — <span id="cachedCount">15 templates, 12 fonts loaded</span></span></div>
+      <div id="filePills" class="file-pills"><div class="pill"><span class="pdot ok"></span>All assets accounted for</div></div>
+    </div>
+    <div class="section">
+      <div class="sec-label">Summary</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-val" id="statTotal">7</div><div class="stat-label">TOTAL ORDERS</div></div>
+        <div class="stat"><div class="stat-val" id="statReady">4</div><div class="stat-label">READY</div></div>
+        <div class="stat"><div class="stat-val" id="statCreated" style="color:var(--success)">4</div><div class="stat-label">CREATED</div></div>
+        <div class="stat"><div class="stat-val" id="statSkipped" style="color:var(--warn)">3</div><div class="stat-label">SKIPPED</div></div>
+      </div>
+    </div>
+    <button class="process-btn" id="processBtn" onclick="processAll()">PROCESS ALL ORDERS</button>
+    <div class="prog-wrap" id="progWrap" style="display: block;"><div class="prog-bg"><div class="prog-fill" id="progFill" style="width: 100%;"></div></div><div class="prog-text" id="progText">Done — 4 created, 3 skipped</div></div><a id="dlBtn" href="blob:https://agc007-25.github.io/3b268ea0-de2a-4a0d-8f33-6bf633893aea" download="MTO Order Tracker_EG_Custom Blankets_4.27.26.zip" class="dl-btn">⬇ DOWNLOAD ZIP — 4 TIFs</a>
+  </div>
+  <div class="content">
+    <div class="table-wrap">
+      <div class="table-hdr"><div class="table-title">Order Queue</div><div class="table-meta" id="tableMeta">7 orders</div></div>
+      <div id="tableContainer">
+    <table><thead><tr><th>Order #</th><th>Name</th><th>Style</th><th>Size</th><th>Status</th><th>Note</th></tr></thead>
+    <tbody><tr><td>SO3572379</td><td>jayla</td><td>Subtly Scalloped</td>
+      <td><span style="font-size:9px;color:var(--muted)">Kids (38in x 31in)</span></td>
+      <td><span class="sbadge created" id="st_0"><span class="sdot"></span>CREATED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_0"></td></tr><tr><td>SO3577610</td><td>KADE</td><td>Wild Child</td>
+      <td><span style="font-size:9px;color:var(--muted)">Kids (38in x 31in)</span></td>
+      <td><span class="sbadge created" id="st_1"><span class="sdot"></span>CREATED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_1"></td></tr><tr><td>SO3574043</td><td>M</td><td>On Repeat</td>
+      <td><span style="font-size:9px;color:var(--muted)">Throw (54in x 36in)</span></td>
+      <td><span class="sbadge skipped" id="st_2"><span class="sdot"></span>SKIPPED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_2">No template for "On Repeat / Throw (54in x 36in)"</td></tr><tr><td>SO3575833</td><td>M</td><td>On Repeat</td>
+      <td><span style="font-size:9px;color:var(--muted)">Throw (54in x 36in)</span></td>
+      <td><span class="sbadge skipped" id="st_3"><span class="sdot"></span>SKIPPED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_3">No template for "On Repeat / Throw (54in x 36in)"</td></tr><tr><td>SO3577678</td><td>S</td><td>On Repeat</td>
+      <td><span style="font-size:9px;color:var(--muted)">Throw (54in x 36in)</span></td>
+      <td><span class="sbadge skipped" id="st_4"><span class="sdot"></span>SKIPPED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_4">No template for "On Repeat / Throw (54in x 36in)"</td></tr><tr><td>SO3575766</td><td>blake</td><td>Subtly Scalloped</td>
+      <td><span style="font-size:9px;color:var(--muted)">Throw (54in x 36in)</span></td>
+      <td><span class="sbadge created" id="st_5"><span class="sdot"></span>CREATED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_5"></td></tr><tr><td>SO3574905</td><td>grace</td><td>Subtly Scalloped</td>
+      <td><span style="font-size:9px;color:var(--muted)">Throw (54in x 36in)</span></td>
+      <td><span class="sbadge created" id="st_6"><span class="sdot"></span>CREATED</span></td>
+      <td style="font-size:9px;color:var(--muted)" id="note_6"></td></tr></tbody></table></div>
+    </div>
+    <div class="log" id="logPanel">
+      <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">System ready. PSDs and fonts are remembered between sessions.</span></div>
+    <div class="log-entry"><span class="log-time">13:53:26</span><span class="log-msg ok">Restored from cache: 15 PSDs, 12 fonts</span></div><div class="log-entry"><span class="log-time">13:53:32</span><span class="log-msg ok">Signed in as andy.concilio@gmail.com</span></div><div class="log-entry"><span class="log-time">13:53:32</span><span class="log-msg warn">Select a client first</span></div><div class="log-entry"><span class="log-time">13:53:36</span><span class="log-msg info">Client switched to BaubleBar — syncing assets…</span></div><div class="log-entry"><span class="log-time">13:53:36</span><span class="log-msg info">Syncing assets from Google Drive…</span></div><div class="log-entry"><span class="log-time">13:53:36</span><span class="log-msg info">0 assets up to date · downloading 27 new/changed…</span></div><div class="log-entry"><span class="log-time">13:53:38</span><span class="log-msg ok">Sync complete — 15 templates, 12 fonts</span></div><div class="log-entry"><span class="log-time">13:53:46</span><span class="log-msg ok">Loaded 7 orders from MTO Order Tracker_EG_Custom Blankets_4.27.26.xlsx</span></div><div class="log-entry"><span class="log-time">13:53:46</span><span class="log-msg warn">3 orders have no matching template (e.g. "On Repeat") — will be skipped</span></div><div class="log-entry"><span class="log-time">13:53:49</span><span class="log-msg info">Client: BaubleBar</span></div><div class="log-entry"><span class="log-time">13:53:49</span><span class="log-msg info">Loaded PSDs: down_the_line_throw.bmp, wild_at_heart_kids_2_color.bmp, wild_child_kids_blank.bmp, spell_it_out_small.bmp, subtly_scalloped_blanket.bmp, wild_at_heart_large_2_color.bmp, wild_at_heart_small_2_color.bmp, spell_it_out_large.bmp, subtly_scalloped_small.bmp, spell_it_out_kids_blank.bmp, subtly_scalloped_kids_blank.bmp, sweettooth_kids_blank.bmp, down_the_line_kids.bmp, large_-_subtly_scalloped_3+5=_denim_heather_4=_lt_blue_6=_natural.bmp, play_date_kids_blank.bmp</span></div><div class="log-entry"><span class="log-time">13:53:49</span><span class="log-msg info">Loaded Fonts: TREBUCIT.TTF, SPONGYTHIN_PERSONAL_USE_ONLY.OTF, SPONGY_PERSONAL_USE_ONLY.OTF, TREBUCBI.TTF, TREBUC.TTF, TREBUCBD.TTF, SPONGYBOLD_PERSONAL_USE_ONLY.OTF, SORIA-BOLD.OTF, ETERNATE_BOLD.OTF, KEEPONTRUCKIN.TTF, ETERNATE.OTF, DEALERPLATE_CALIFORNIA.TTF</span></div><div class="log-entry"><span class="log-time">13:53:49</span><span class="log-msg info">Order styles: Subtly Scalloped / Kids (38in x 31in), Wild Child / Kids (38in x 31in), On Repeat / Throw (54in x 36in), Subtly Scalloped / Throw (54in x 36in)</span></div><div class="log-entry"><span class="log-time">13:53:49</span><span class="log-msg ok">✅ SO3572379_jayla.tif</span></div><div class="log-entry"><span class="log-time">13:53:51</span><span class="log-msg ok">✅ SO3577610_KADE.tif</span></div><div class="log-entry"><span class="log-time">13:53:51</span><span class="log-msg warn">⚠ Skipped SO3574043_M.tif — no template for "On Repeat / Throw (54in x 36in)"</span></div><div class="log-entry"><span class="log-time">13:53:51</span><span class="log-msg warn">⚠ Skipped SO3575833_M.tif — no template for "On Repeat / Throw (54in x 36in)"</span></div><div class="log-entry"><span class="log-time">13:53:51</span><span class="log-msg warn">⚠ Skipped SO3577678_S.tif — no template for "On Repeat / Throw (54in x 36in)"</span></div><div class="log-entry"><span class="log-time">13:53:51</span><span class="log-msg ok">✅ SO3575766_blake.tif</span></div><div class="log-entry"><span class="log-time">13:53:52</span><span class="log-msg ok">✅ SO3574905_grace.tif</span></div><div class="log-entry"><span class="log-time">13:53:52</span><span class="log-msg ok">📦 ZIP ready — 4 TIFs</span></div></div>
+  </div>
+</div>
+
+<!-- ── QUICK TEST TAB ── -->
+<div class="tab-content" id="tab-quicktest">
+  <div class="cal-wrap">
+    <div class="cal-title">Quick Test a Template</div>
+    <div class="cal-sub">
+      Test how a name renders on any existing template — no spreadsheet needed.<br>
+      This uses the exact same render code as Process Orders, so results match real runs.<br>
+      Read-only: nothing here changes any saved template settings.
+    </div>
+    <div class="cal-fields">
+      <div class="field-group"><label>Template</label>
+        <select id="qtTemplate" onchange="qtOnTemplateChange()"><option value="">— Select a template —</option></select>
+      </div>
+      <div class="field-group"><label>Name to render</label>
+        <input type="text" id="qtName" placeholder="e.g. Julia">
+      </div>
+      <div class="field-group"><label>Font (override, optional)</label>
+        <input type="text" id="qtFont" placeholder="leave blank to use template default">
+      </div>
+      <div class="field-group" id="qtCaseGroup" style="display:none"><label>Font Case (Butterscotch)</label>
+        <select id="qtCase">
+          <option value="">Template default</option>
+          <option value="proper">Proper</option>
+          <option value="caps">CAPS</option>
+          <option value="lower">lower</option>
+        </select>
+      </div>
+      <div class="field-group" id="qtSizeGroup" style="display:none"><label>Size (Butterscotch)</label>
+        <select id="qtSize">
+          <option value="SB">SB (132×126)</option>
+          <option value="BB">BB (222×221)</option>
+          <option value="LBB">LBB (318×275)</option>
+          <option value="XLBB">XLBB (370×364)</option>
+        </select>
+      </div>
+    </div>
+    <button class="cal-btn" id="qtBtn" onclick="runQuickTest()">GENERATE TEST</button>
+    <div class="cal-result" id="qtResult" style="display:none">
+      <div class="cal-result-title">Result</div>
+      <div style="margin-bottom:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:13px;color:#ccc"><input type="checkbox" id="qtGridToggle" onchange="qtRedrawOverlay()"> Show 10px grid</label>
+        <label style="font-size:13px;color:#ccc"><input type="checkbox" id="qtCrosshairToggle" checked="" onchange="qtRedrawOverlay()"> Show zone crosshair (cx/cy)</label>
+        <span style="font-size:12px;color:#888">Zoom: <input type="range" id="qtZoom" min="1" max="6" step="0.5" value="2" oninput="qtRedrawOverlay()" style="vertical-align:middle"></span>
+      </div>
+      <div style="overflow:auto;max-width:100%;border:1px solid #444;display:inline-block">
+        <canvas id="qtCanvas" style="image-rendering:pixelated;background:#fff;display:block"></canvas>
+      </div>
+      <div id="qtDownloadWrap" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CALIBRATE TAB ── -->
+<div class="tab-content" id="tab-calibrate">
+  <div class="cal-wrap">
+    <div class="cal-title">Add New Template</div>
+    <div class="cal-sub">
+      To add a new template style without needing help:<br>
+      1. Save the PSD with the text layer HIDDEN (blank template)<br>
+      2. Save a second PSD/TIF with a sample name filled in (finished example)<br>
+      3. Drop both files below + enter the style name and font<br>
+      4. Click Calibrate — the tool detects the zones automatically<br>
+      5. Copy the generated config and send it to your developer to add to the tool
+    </div>
+    <div class="cal-grid">
+      <div class="cal-drop" id="calBlankDrop" onclick="document.getElementById('calBlankInput').click()">
+        <input type="file" id="calBlankInput" accept=".psd,.bmp,.tif,.tiff" onchange="calLoadBlank(this.files[0])">
+        <div class="cd-icon">⬜</div>
+        <div class="cd-label">Blank Template</div>
+        <div class="cd-sub" id="calBlankName">PSD or BMP with text layer hidden</div>
+      </div>
+      <div class="cal-drop" id="calFinishedDrop" onclick="document.getElementById('calFinishedInput').click()">
+        <input type="file" id="calFinishedInput" accept=".psd,.tif,.tiff" onchange="calLoadFinished(this.files[0])">
+        <div class="cd-icon">✅</div>
+        <div class="cd-label">Finished Example</div>
+        <div class="cd-sub" id="calFinishedName">PSD or TIF with sample name</div>
+      </div>
+    </div>
+    <div class="cal-fields">
+      <div class="field-group"><label>Style Name (must match spreadsheet)</label><input type="text" id="calStyleName" placeholder="e.g. Spell It Out"></div>
+      <div class="field-group"><label>Sample Name Used</label><input type="text" id="calSampleName" placeholder="e.g. REESE"></div>
+      <div class="field-group"><label>Font Filename</label><input type="text" id="calFontFile" placeholder="e.g. DEALERPLATE CALIFORNIA.TTF"></div>
+    </div>
+    <button class="cal-btn" id="calBtn" onclick="runCalibration()" disabled="">CALIBRATE</button>
+    <div class="cal-result" id="calResult">
+      <button class="copy-btn" onclick="copyCalResult()">COPY</button>
+      <div class="cal-result-title">Generated Configuration</div>
+      <div class="cal-code" id="calCode"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-const FIBERS = [{"key": "Cotton_CM_2024_R1", "display": "Combed Cotton", "colors": [{"name": "Black", "hex": "#1E1E20"}, {"name": "Bleach Wht", "hex": "#FFFFFF"}, {"name": "Camel", "hex": "#D3A98A"}, {"name": "Carrot", "hex": "#E15139"}, {"name": "Cocoa", "hex": "#614F41"}, {"name": "Dk Aqua RL", "hex": "#1E565A"}, {"name": "Greggio", "hex": "#FCF6E5"}, {"name": "Lt Grey", "hex": "#D7D8D0"}, {"name": "Mango Mojito", "hex": "#D9A040"}, {"name": "Navy", "hex": "#323B4C"}, {"name": "Oatmeal", "hex": "#DAB194"}, {"name": "Oyster RL", "hex": "#CFC3B1"}, {"name": "Parot Green", "hex": "#90B35A"}, {"name": "Pergamena", "hex": "#F1D8BA"}, {"name": "Pink Salt", "hex": "#F2D0C4"}, {"name": "Piombo", "hex": "#555358"}, {"name": "Poseidon", "hex": "#30455F"}, {"name": "Rust RL", "hex": "#94592B"}, {"name": "Sky Blue", "hex": "#BED6EE"}, {"name": "Slate Blue RL", "hex": "#5D6D7C"}, {"name": "Stillwater", "hex": "#6CA1AB"}, {"name": "Turquoise RL", "hex": "#6C898A"}]}, {"key": "Egyptian_2022", "display": "Egyptian Cotton", "colors": [{"name": "Ashleigh Blue", "hex": "#6A87AD"}, {"name": "Carousel NEW", "hex": "#F5BEC8"}, {"name": "Carousel OLD", "hex": "#E8B8C0"}, {"name": "Charcoal", "hex": "#686C6F"}, {"name": "Cherry NEW", "hex": "#9D1C31"}, {"name": "Cherry OLD", "hex": "#A02F3C"}, {"name": "Citron NEW", "hex": "#D5AF65"}, {"name": "Citron OLD", "hex": "#D7AE5F"}, {"name": "Copper", "hex": "#C77F36"}, {"name": "Coral", "hex": "#DA7B70"}, {"name": "Driftwood", "hex": "#A0938C"}, {"name": "Eden", "hex": "#264E33"}, {"name": "Grain", "hex": "#DECDB5"}, {"name": "Hawaii Sunset", "hex": "#B95D13"}, {"name": "Kentucky Blue", "hex": "#A5B3CC"}, {"name": "Lavender", "hex": "#BFB4D8"}, {"name": "Mahogany", "hex": "#5D4942"}, {"name": "Meteorite", "hex": "#393D42"}, {"name": "Midnight", "hex": "#313547"}, {"name": "Monument", "hex": "#9AA8AA"}, {"name": "Ocean NEW", "hex": "#25406D"}, {"name": "Ocean OLD", "hex": "#586E8D"}, {"name": "Pesto", "hex": "#586032"}, {"name": "Pumice NEW", "hex": "#F3E8DD"}, {"name": "Pumice OLD", "hex": "#E1D8C9"}, {"name": "Raisin", "hex": "#67454D"}, {"name": "Sea Green", "hex": "#B9C4B5"}, {"name": "Sky", "hex": "#BECDDC"}, {"name": "Slate", "hex": "#5E5145"}, {"name": "Snow White", "hex": "#F7F7F9"}, {"name": "Spring", "hex": "#A5B374"}, {"name": "Stable", "hex": "#CBB8A3"}, {"name": "Stone NEW", "hex": "#BDB6AB"}, {"name": "Stone OLD", "hex": "#C6BFB8"}, {"name": "Teal", "hex": "#567676"}, {"name": "Tulip", "hex": "#CE3773"}, {"name": "Umber", "hex": "#916A55"}, {"name": "Whale", "hex": "#8E9EA1"}]}, {"key": "Merino_Wool_2022_", "display": "Merino Wool", "colors": [{"name": "Apple", "hex": "#C02025"}, {"name": "Aqua", "hex": "#1A82B5"}, {"name": "Black", "hex": "#37383C"}, {"name": "Burgundy", "hex": "#7E223C"}, {"name": "Chestnut", "hex": "#A66F52"}, {"name": "Clover", "hex": "#0B8644"}, {"name": "Denim", "hex": "#59697D"}, {"name": "Espresso", "hex": "#4B3F3A"}, {"name": "Flint", "hex": "#69625B"}, {"name": "Fog", "hex": "#9C9D9A"}, {"name": "Gold Yellow", "hex": "#F4C531"}, {"name": "Merlot", "hex": "#814540"}, {"name": "Mint", "hex": "#C1E1C1"}, {"name": "Navy", "hex": "#3A3B4E"}, {"name": "Oatmeal", "hex": "#FBDCBD"}, {"name": "Ochre", "hex": "#BE8031"}, {"name": "Pale Pink", "hex": "#E8CACA"}, {"name": "Peach", "hex": "#DA875B"}, {"name": "Peacock", "hex": "#1D5D65"}, {"name": "Peony", "hex": "#CE7590"}, {"name": "Pepper (Charcoal)", "hex": "#4A4A45"}, {"name": "Pine", "hex": "#55624C"}, {"name": "Powder", "hex": "#9EBCD6"}, {"name": "Raw", "hex": "#EFEEDE"}, {"name": "Royal", "hex": "#233878"}, {"name": "Sage", "hex": "#8A9D92"}, {"name": "Sahara", "hex": "#DDB58F"}, {"name": "Taupe", "hex": "#ADA193"}, {"name": "Tomato", "hex": "#E74241"}, {"name": "Wisteria", "hex": "#B293AA"}]}, {"key": "Organic_Cotton_2022", "display": "Organic Cotton", "colors": [{"name": "Apricot", "hex": "#F2932E"}, {"name": "Aquamarine", "hex": "#A2CADE"}, {"name": "Barn Red", "hex": "#82433C"}, {"name": "Cloud Dance", "hex": "#F5F6F8"}, {"name": "Delft", "hex": "#42699E"}, {"name": "French Vanilla NEW", "hex": "#F8E199"}, {"name": "French Vanilla OLD", "hex": "#FAE185"}, {"name": "Garden Green", "hex": "#495D34"}, {"name": "Grape SI", "hex": "#A792BC"}, {"name": "Gull Grey NEW", "hex": "#5E5E60"}, {"name": "Gull Grey OLD", "hex": "#625E60"}, {"name": "Juniper", "hex": "#7E978E"}, {"name": "Kelp", "hex": "#859869"}, {"name": "Lavender Mist NEW", "hex": "#D2ACCE"}, {"name": "Lavender Mist OLD", "hex": "#C59FB9"}, {"name": "Lunar Rock", "hex": "#ABB4B3"}, {"name": "Mocha Mouse NEW", "hex": "#9E6451"}, {"name": "Mocha Mouse OLD", "hex": "#B37358"}, {"name": "Mustard NEW", "hex": "#D29D41"}, {"name": "Mustard OLD", "hex": "#B08C50"}, {"name": "Navy", "hex": "#66648B"}, {"name": "Pearl NEW", "hex": "#FAD2DC"}, {"name": "Pearl OLD", "hex": "#F2D0C6"}, {"name": "Powder Pink NEW", "hex": "#F0A7AB"}, {"name": "Powder Pink OLD", "hex": "#F5A9A5"}, {"name": "Sand", "hex": "#E7BF90"}, {"name": "Santorini Blue SI", "hex": "#6DA3D5"}, {"name": "Spicy Orange", "hex": "#E1513A"}, {"name": "Sunshine SI", "hex": "#FFD878"}, {"name": "Tango Red", "hex": "#AC0D2D"}]}, {"key": "Recycled_Cotton_Combined", "display": "Recycled Cotton", "colors": [{"name": "Aluminum", "hex": "#AEB2B5"}, {"name": "Autumn", "hex": "#AB917C"}, {"name": "Azurro Cielo", "hex": "#BED6EE"}, {"name": "Beige", "hex": "#BB9C76"}, {"name": "Bleach", "hex": "#F1F0EB"}, {"name": "Blu Marine", "hex": "#323B4C"}, {"name": "Blue Jeans", "hex": "#626878"}, {"name": "Bordeaux", "hex": "#6D3445"}, {"name": "Bottle Green", "hex": "#325C53"}, {"name": "Bruciato", "hex": "#654A3E"}, {"name": "Burgundy", "hex": "#5D2A32"}, {"name": "Camel", "hex": "#D3A98A"}, {"name": "Cardinal", "hex": "#632D5B"}, {"name": "Cherry", "hex": "#BD152D"}, {"name": "Coral", "hex": "#EE5F4B"}, {"name": "Cornflower", "hex": "#ADBDD6"}, {"name": "Daffodil", "hex": "#F1DE9D"}, {"name": "Flame", "hex": "#F89257"}, {"name": "Flax", "hex": "#D0C5B2"}, {"name": "Giallo Medio", "hex": "#FFCC52"}, {"name": "Greggio", "hex": "#F2ECDB"}, {"name": "Grey 311", "hex": "#646466"}, {"name": "Hunter Green", "hex": "#435E4E"}, {"name": "Jade", "hex": "#129489"}, {"name": "Jeans", "hex": "#6E7486"}, {"name": "Jet Black", "hex": "#29282D"}, {"name": "Marine", "hex": "#2B2E43"}, {"name": "Nero", "hex": "#1E1E20"}, {"name": "Oatmeal", "hex": "#BAA584"}, {"name": "Pergamena", "hex": "#EBDAB5"}, {"name": "Pesco", "hex": "#E88353"}, {"name": "Piombo", "hex": "#515254"}, {"name": "Pistacchio", "hex": "#A3A969"}, {"name": "Purple", "hex": "#503E74"}, {"name": "Rosa Chiaro", "hex": "#FADBE7"}, {"name": "Rosso", "hex": "#A91F32"}, {"name": "Royal Hickory", "hex": "#1B508F"}, {"name": "Rugiada", "hex": "#C3C2C6"}, {"name": "Saffron", "hex": "#AE3E47"}, {"name": "Seafoam", "hex": "#52B0AE"}, {"name": "Spice", "hex": "#B65F4B"}, {"name": "Turchese", "hex": "#159DCD"}, {"name": "Turquesa", "hex": "#009CAE"}, {"name": "Vapor", "hex": "#5C899C"}, {"name": "Verde", "hex": "#608259"}, {"name": "Verde Acqua", "hex": "#A1D8BE"}, {"name": "Verde Bandiera", "hex": "#088758"}, {"name": "Winter White", "hex": "#F3ECE1"}]}];
-let activeFiber = FIBERS[0].key;
-let query = '';
-const tabsEl = document.getElementById('tabs');
-const mainEl = document.getElementById('main');
-const searchEl = document.getElementById('search');
-const toastEl = document.getElementById('toast');
-function renderTabs(){
-  tabsEl.innerHTML = '';
-  FIBERS.forEach(f => {
-    const btn = document.createElement('button');
-    btn.className = 'tab' + (f.key === activeFiber ? ' active' : '');
-    btn.textContent = f.display;
-    btn.onclick = () => { activeFiber = f.key; render(); };
-    tabsEl.appendChild(btn);
+// ─────────────────────────────────────────────────────────────────────────────
+// GOOGLE CONFIG — Fill these in after setup (see SETUP GUIDE in README section)
+// ─────────────────────────────────────────────────────────────────────────────
+const GOOGLE_CONFIG = {
+  CLIENT_ID:       '70048819950-0dp69iq6277cnrhffo0b1ffgr53bdk7h.apps.googleusercontent.com',
+  WHITELIST_SHEET: '1CvUfLAUf-CvaVCK3MOol9tiKw7NDoIl62btyT_VxlSY',
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLIENT REGISTRY
+// Each client defines: label, driveFolder, columns (spreadsheet mapping),
+// fontColumn (optional col name for per-order font), sizeFilter (optional),
+// and templates keyed by "Style|Size" (font baked in per zone, or overridden
+// per order when fontColumn is present).
+// ─────────────────────────────────────────────────────────────────────────────
+const CLIENT_REGISTRY = {
+
+  'BaubleBar': {
+    label:       'BaubleBar',
+    driveFolder: '19yarwoxvrkT50i4jauVVabwZGWntexFC',
+    // Spreadsheet column names
+    columns: {
+      orderNum:  'Customer Order Number',
+      name:      'Customization',
+      style:     'Style',
+      size:      'Correct Size',
+      font:      null,  // BaubleBar: font is fixed per template, not in spreadsheet
+    },
+    // Size values to accept from spreadsheet (lowercase substring match)
+    sizeFilter: ['kids', 'throw', 'blanket'],
+    templates: {
+      // ── KIDS ──────────────────────────────────────────────────────────────
+      'Spell It Out|Kids':{
+        psd:'Spell_It_Out_Kids_blank.bmp',
+        palette:[[203,203,203],[255,255,255]],
+        zones:[{font:'DEALERPLATE_CALIFORNIA.TTF',cx:164,cy:199,w:246,h:84,angle:0,color:[203,203,203,255],mode:'fit'}]
+      },
+      'Down The Line|Kids':{
+        psd:'down_the_line_kids.Bmp',
+        palette:[[0,0,0],[155,155,155],[208,208,208],[255,255,255]],
+        zones:[{font:'SORIA-BOLD.OTF',cx:131,cy:179,w:330,h:72,angle:-90,color:[0,0,0,255],mode:'right',rightEdge:164}]
+      },
+      'Subtly Scalloped|Kids':{
+        psd:'Subtly_Scalloped_Kids_blank.bmp',
+        palette:[[255,255,255],[207,207,207],[115,115,115],[0,0,0]],
+        zones:[{font:'ETERNATE_BOLD.OTF',cx:164,cy:178,w:266,h:170,hCrop:160,angle:0,color:[0,0,0,255],mode:'midbody',forceSize:55}]
+      },
+      'Wild at Heart|Kids':{
+        psd:'WILD_AT_HEART_KIDS_2_COLOR.bmp',
+        palette:[[45,45,45],[128,128,128],[192,192,192],[255,255,255]],
+        zones:[{font:'TREBUCBD.TTF',cx:161,cy:171,w:157,h:27,angle:0,color:[45,45,45,255],mode:'fit',uppercase:true}]
+      },
+      'Wild Child|Kids':{
+        psd:'Wild_Child_KIDS_blank.bmp',
+        palette:[[0,0,0],[118,116,115],[194,195,195],[255,255,255]],
+        zones:[
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:170,cy:64, w:135,h:23,angle:-38.5,color:[194,195,195,255],mode:'diag',uppercase:true,forceMin:16},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:138,cy:233,w:135,h:26,angle:56.2, color:[194,195,195,255],mode:'diag',uppercase:true,forceMin:16,flip:true},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:246,cy:165,w:135,h:24,angle:29.6, color:[0,0,0,255],      mode:'diag',uppercase:true,forceMin:16},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:153,cy:324,w:134,h:22,angle:-8.0, color:[0,0,0,255],      mode:'diag',uppercase:true,forceMin:16}
+        ]
+      },
+      'Play Date|Kids':{
+        psd:'Play_Date_KIDS_blank.bmp',
+        palette:[[0,0,0],[139,139,138],[189,190,190],[255,255,255]],
+        zones:[
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:160,cy:58, w:82,h:24,angle:-33.4,color:[189,190,190,255],mode:'diag',uppercase:true,forceSize:24},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:245,cy:158,w:82,h:24,angle:33.4, color:[139,139,138,255],mode:'diag',uppercase:true,forceSize:24},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:108,cy:204,w:81,h:31,angle:60.8, color:[189,190,190,255],mode:'diag',uppercase:true,forceSize:24,flip:true},
+          {font:'SPONGY_PERSONAL_USE_ONLY.OTF',cx:149,cy:324,w:82,h:22,angle:-9.4, color:[139,139,138,255],mode:'diag',uppercase:true,forceSize:24}
+        ]
+      },
+      'Sweet Tooth|Kids':{
+        psd:'SweetTooth_KIDS_blank.bmp',
+        palette:[[0,0,0],[137,136,135],[199,198,199],[255,255,255]],
+        zones:[
+          {font:'KEEPONTRUCKIN.TTF',cx:233,cy:60, w:160,h:24,angle:30.0, color:[137,136,135,255],mode:'diag',uppercase:true},
+          {font:'KEEPONTRUCKIN.TTF',cx:92, cy:169,w:161,h:25,angle:-25.8,color:[0,0,0,255],      mode:'diag',uppercase:true},
+          {font:'KEEPONTRUCKIN.TTF',cx:216,cy:300,w:160,h:24,angle:16.1, color:[137,136,135,255],mode:'diag',uppercase:true}
+        ]
+      },
+      // ── THROW ─────────────────────────────────────────────────────────────
+      'Spell It Out|Throw':{
+        psd:'SPELL_IT_OUT_SMALL.Bmp',
+        palette:[[45,45,45],[255,255,255]],
+        zones:[{font:'DEALERPLATE_CALIFORNIA.TTF',cx:179,cy:263,w:330,h:60,angle:0,color:[45,45,45,255],mode:'fit'}]
+      },
+      'Down The Line|Throw':{
+        psd:'down_the_line_throw.bmp',
+        palette:[[0,0,0],[155,155,155],[230,230,229],[255,255,255]],
+        zones:[{font:'SORIA-BOLD.OTF',cx:149,cy:252,w:451,h:80,angle:-90,color:[0,0,0,255],mode:'right',rightEdge:179,forceMin:60}]
+      },
+      'Subtly Scalloped|Throw':{
+        psd:'Subtly_Scalloped_Small.bmp',
+        palette:[[255,255,255],[207,207,207],[115,115,115],[0,0,0]],
+        zones:[{font:'ETERNATE_BOLD.OTF',cx:178,cy:256,w:326,h:112,hCrop:130,hCropBias:5,angle:0,color:[0,0,0,255],mode:'midbody',forceSize:55}]
+      },
+      'Wild at Heart|Throw':{
+        psd:'WILD_AT_HEART_SMALL_2_COLOR.Bmp',
+        palette:[[45,45,45],[128,128,128],[192,192,192],[255,255,255]],
+        zones:[{font:'TREBUCBD.TTF',cx:179,cy:233,w:170,h:25,angle:0,color:[45,45,45,255],mode:'fit',uppercase:true}]
+      },
+      // ── BLANKET ───────────────────────────────────────────────────────────
+      'Spell It Out|Blanket':{
+        psd:'SPELL_IT_OUT_LARGE.Bmp',
+        palette:[[45,45,45],[255,255,255]],
+        zones:[{font:'DEALERPLATE_CALIFORNIA.TTF',cx:282,cy:364,w:490,h:114,angle:0,color:[45,45,45,255],mode:'fit'}]
+      },
+      'Wild at Heart|Blanket':{
+        psd:'WILD_AT_HEART_LARGE_2_COLOR.Bmp',
+        palette:[[45,45,45],[128,128,128],[192,192,192],[255,255,255]],
+        zones:[{font:'TREBUCBD.TTF',cx:274,cy:315,w:268,h:50,angle:0,color:[45,45,45,255],mode:'fit',uppercase:true}]
+      },
+      'Subtly Scalloped|Blanket':{
+        psd:'subtly_scalloped_blanket.bmp',
+        palette:[[255,255,255],[207,207,207],[115,115,115],[0,0,0]],
+        zones:[{font:'ETERNATE_BOLD.OTF',cx:276,cy:320,w:494,h:200,hCrop:200,hCropBias:4,angle:0,color:[0,0,0,255],mode:'midbody',forceSize:72}]
+      },
+    }
+  },
+
+  'In2Green': {
+    label:       'In2Green',
+    driveFolder: '1RAXnLGlD7g-CcCIfL7iAe51Gz9VBjWJF', // In2Green subfolder in Knit Assets
+    columns: {
+      orderNum: 'Reference',
+      name:     'Line 1',
+      line2:    'Line 2',
+      style:    'Product/Name',
+      size:     'Product/Product/Size',
+      caseMode: 'Font Case',
+      font:     null, // In2Green: font is fixed per template
+    },
+    sizeFilter: [],  // empty = accept all sizes
+    templates: {
+      // cx = spreadsheet left-edge + w/2 (true center X)
+      // cy = spreadsheet top-edge + h/2 (true center Y)
+      'Baby Anchor':{psd:'Baby Anchor.bmp',autoPalette:true,zones:[{font:'TRADEGOTHICLTSTD-BOLD',cx:103,cy:313,w:205,h:29,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:34,uppercase:true}]},
+      'Baby Border':{psd:'Baby Border.bmp',autoPalette:true,zones:[{font:'NeutraDisp-Bold.otf',cx:259,cy:177,w:40,h:288,angle:-90.0,color:[255,255,255,255],mode:'fit',uppercase:true}]},
+      'Baby Dino':{psd:'Baby Dino.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:203,cy:254,w:183,h:37,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:30,uppercase:true}]},
+      'Baby Dinosaur':{psd:'Baby Dino.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:203,cy:254,w:183,h:37,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:30,uppercase:true}]},
+      'Baby Ducky':{psd:'Baby Ducky.bmp',autoPalette:true,zones:[{font:'TRADEGOTHICLTSTD-BOLD',cx:154,cy:322,w:306,h:27,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:38}]},
+      'Baby Farm':{psd:'Baby Farm.bmp',autoPalette:true,zones:[{font:'GARAMONDPREMRPRO-SMBD',cx:152,cy:340,w:302,h:30,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:25,uppercase:true}]},
+      'Baby Forager':{psd:'Baby Forager.bmp',autoPalette:true,zones:[{font:'BEBASNEUE-REGULAR',cx:151,cy:341,w:174,h:33,angle:0.0,color:'dkgrey',mode:'fit',forceMax:35,uppercase:true}]},
+      'Baby Happy Camper':{psd:'Baby Happy Camper.bmp',autoPalette:true,zones:[{font:'Alternative Gothic N2',cx:322,cy:253,w:146,h:28,angle:0.0,color:'dkgrey',mode:'fit',forceMax:30,uppercase:true}]},
+      'Baby Hedgehog':{psd:'Baby Hedgehog.bmp',autoPalette:true,zones:[{font:'TRADEGOTHICLTSTD-BOLD',cx:334,cy:187,w:108,h:27,angle:0.0,color:'dkgrey',mode:'fit',forceMax:36}]},
+      'Baby Herringbone Heart':{psd:'Baby Herringbone Heart.bmp',autoPalette:true,zones:[{font:'MVBOLI',cx:225,cy:283,w:68,h:35,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:29,uppercase:true}]},
+      'Baby Loved':{psd:'Baby Loved.bmp',autoPalette:true,zones:[{font:'Jumping Unicorn',cx:140,cy:235,w:260,h:49,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:49}]},
+      'Baby Milestone':{psd:'Baby Milestone.bmp',autoPalette:true,zones:[{font:'Metropolis-Black.otf',cx:81,cy:325,w:135,h:37,angle:0.0,color:'dkgrey',mode:'fit',forceMax:30}]},
+      'Baby Rabbits':{psd:'Baby Rabbits.bmp',autoPalette:true,zones:[{font:'Chalkboard-Regular',cx:152,cy:49,w:302,h:53,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:40,lowercase:true}]},
+      'Baby Sleep Tight':{psd:'Baby SleepTight.bmp',autoPalette:true,zones:[{font:'COMIC',cx:198,cy:245,w:224,h:40,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:35,lowercase:true}]},
+      'Baby Sun Moon Stars Milestone':{psd:'Baby SunMoonStars.bmp',autoPalette:true,zones:[{font:'Helvetica-World-Regular',cx:331,cy:248,w:94,h:29,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:21,uppercase:true}]},
+      'Baby Trucks':{psd:'Baby Trucks.bmp',autoPalette:true,zones:[{font:'Kiddosy Regular.ttf',cx:150,cy:180,w:234,h:52,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:48,lowercase:true}]},
+      'Baby Typewriter':{psd:'Baby Typewriter.bmp',autoPalette:true,zones:[{font:'COURIER.TTF',cx:102,cy:252,w:130,h:32,angle:0.0,color:'dkgrey',mode:'fit',forceMax:20,uppercase:true}]},
+      'Baby Herringbone':{psd:'Baby Herringbone.bmp',autoPalette:true,zones:[{font:'Gotham',cx:154,cy:300,w:124,h:26,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:21,uppercase:true}]},
+      'Bold Values':{psd:'Bold Values.bmp',autoPalette:true,zones:[{font:'ARIALBI',cx:354,cy:332,w:399,h:43,angle:0.0,color:'dkgrey',mode:'fit',forceMax:36,uppercase:true}]},
+      'Canoe with Mountains':{psd:'Canoe with Mountains.bmp',autoPalette:true,zones:[{font:'CHARTERBLACKBT',cx:299,cy:372,w:349,h:39,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:35,uppercase:true}]},
+      'Fair Isle':{psd:'FaireIsle.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:249,cy:519,w:267,h:31,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:25,uppercase:true}]},
+      'Fair Isle with Skis':{psd:'Faire Isle With Skis.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:249,cy:518,w:193,h:31,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:25,uppercase:true}]},
+      'Herringbone Initials':{psd:'Herringbone Initials.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:443,cy:456,w:70,h:28,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:23,uppercase:true}]},
+      'Herringbone Name':{psd:'Herringbone Name.bmp',autoPalette:true,zones:[{font:'GARAMONDPREMRPRO-SMBD',cx:250,cy:489,w:123,h:30,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:24,uppercase:true}]},
+      'Herringbone Stripe':{psd:'Herringbone Stripe.bmp',autoPalette:true,zones:[{font:'Gotham',cx:50,bottomY:510,w:300,h:50,angle:90.0,color:[255,255,255,255],mode:'bottomAnchor',forceSize:22}]},
+      'Houndstooth Horse Bit':{psd:'Houndstooth HorseBit.bmp',autoPalette:true,zones:[{font:'CHEROKEE',cx:249,cy:512,w:237,h:52,angle:0.0,color:'dkgrey',mode:'fit',forceMax:40,uppercase:true}]},
+      'Housewarming':{psd:'Housewarming.bmp',autoPalette:true,zones:[{font:'Acherus Grotesque Regular',cx:404,cy:504,w:143,h:30,angle:0.0,color:'dkgrey',mode:'fit',forceMax:24}]},
+      'Kid Herringbone':{psd:'KidHerringbone.bmp',autoPalette:true,zones:[{font:'Gotham',cx:200,cy:396,w:148,h:23,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:21,uppercase:true}]},
+      'Love by Susy Pilgrim Waters':{psd:'Love.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:171,cy:484,w:124,h:35,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:28,uppercase:true}]},
+      'Nautical stripes':{psd:'Nautical Stripe.bmp',autoPalette:true,zones:[{font:'BEBASNEUE-REGULAR',cx:252,cy:479,w:502,h:48,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:40,uppercase:true}]},
+      'Oars':{psd:'Oars.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:252,cy:483,w:502,h:52,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:40}]},
+      'PBK Kid Herringbone':{psd:'Kid Herringbone.bmp',autoPalette:true,zones:[{font:'Gotham',cx:200,cy:396,w:148,h:23,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:21,uppercase:true}]},
+      'Pride For All':{psd:'Pride For All.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:272,cy:386,w:542,h:33,angle:0.0,color:[255,255,255,255],mode:'fit',forceMax:28,uppercase:true}]},
+      'Snaffle Bit Border':{psd:'Snaffle BitMaster.bmp',autoPalette:true,zones:[{font:'GARA_BD.TTF',cx:339,cy:509,w:194,h:43,angle:0.0,color:'dkgrey',mode:'fit',forceMax:35,uppercase:true}]},
+      'Woodgrain Heart':{psd:'Woodgrain Heart.bmp',autoPalette:true,zones:[{font:'MARYDBOL',cx:367,cy:426,w:83,h:47,angle:0.0,color:[0,0,0,255],mode:'fit',forceMax:33,uppercase:true}]},
+      // ── MULTI-ZONE (pending) ───────────────────────────────────────────────
+      // 'Baby Block Milestone' — 2 zones
+      // 'Chevron' — 2 zones
+      // 'Confetti (1 Line/ 2 Lines)' — 2 zones
+      // 'Love Letters' — 2 zones
+      // 'M&G- Nautical Flag (2 Line)' — 2 zones
+      // 'M&G- Tie The Knot (2 Line)' — 2 zones
+      // 'M&G- Vintage American Flag (2 Line)' — 2 zones
+      // 'Surfboards' — 2 zones, angle:90
+      // 'Tie the Knot (2 Line)' — 2 zones
+      // 'M&G- Pennant (3 Line)' — 3 zones
+    }
+  },
+
+  'Butterscotch': {
+    label:       'Butterscotch',
+    driveFolder: '1WotRsjXmJ8J9z2If6ecAkPNJsaHfxyar',
+    columns: {
+      orderNum: 'Reference',
+      name:     'Line 1',
+      style:    'Product',
+      size:     null,
+      font:     'Font',
+      caseMode: 'Font Case',
+      designValue: 'Design 1/Value',
+    },
+    sizeFilter: [],
+    // Scale factors relative to SB base (132×126).
+    // cx,cy,w,h in templates are SB pixels; renderer scales to target size at runtime.
+    sizes: {
+      'SB':  {w:132, h:126, scaleX:1.000, scaleY:1.000},
+      'BB':  {w:222, h:221, scaleX:1.682, scaleY:1.754},
+      'LBB': {w:318, h:275, scaleX:2.409, scaleY:2.183},
+      'XLBB':{w:370, h:364, scaleX:2.803, scaleY:2.889},
+    },
+    templates: {
+      'SB-10':{psd:'SB-10.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:22,w:108,h:22,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-101':{psd:'SB-101.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:12,w:126,h:17,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-102':{psd:'SB-102.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:95,cy:63,w:72,h:22,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-104':{psd:'SB-104.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:12,w:121,h:15,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-105':{psd:'SB-105.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:62,w:58,h:42,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-107':{psd:'SB-107.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:63,w:58,h:33,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-108':{psd:'SB-108.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:55,w:124,h:13,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-109':{psd:'SB-109.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:26,w:106,h:27,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:69,cy:79,w:17,h:10,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-110':{psd:'SB-110.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:34,w:116,h:49,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-112':{psd:'SB-112.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:52,h:25,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-113':{psd:'SB-113.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:27,w:118,h:43,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:66,cy:71,w:24,h:13,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-117':{psd:'SB-117.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:24,w:117,h:29,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-119':{psd:'SB-119.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:73,cy:52,w:98,h:49,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-120':{psd:'SB-120.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:75,cy:60,w:92,h:29,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-128':{psd:'SB-128.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:82,cy:48,w:83,h:19,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-121':{psd:'SB-121.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:71,cy:51,w:101,h:49,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-13':{psd:'SB-13.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:29,w:107,h:30,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-131':{psd:'SB-131.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:63,w:71,h:41,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-132':{psd:'SB-132.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:101,w:111,h:28,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-133':{psd:'SB-133.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:75,h:53,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-135':{psd:'SB-135.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:77,h:42,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-137':{psd:'SB-137.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:14,w:123,h:19,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-138':{psd:'SB-138.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:74,w:63,h:32,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-139':{psd:'SB-139.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:18,w:119,h:28,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-13b':{psd:'SB-13b.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:63,w:63,h:54,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-14':{psd:'SB-14.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:26,w:100,h:25,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-140':{psd:'SB-140.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:25,w:117,h:33,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-15':{psd:'SB-15.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:32,w:104,h:35,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-16':{psd:'SB-16.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:26,w:115,h:32,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-19':{psd:'SB-19.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:31,w:110,h:40,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-21':{psd:'SB-21.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:26,w:117,h:33,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-27':{psd:'SB-27.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:27,w:117,h:36,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-28':{psd:'SB-28.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:65,cy:64,w:70,h:17,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-29':{psd:'SB-29.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:67,h:20,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-30':{psd:'SB-30.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:66,cy:64,w:59,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-31':{psd:'SB-31.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:64,h:36,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-32':{psd:'SB-32.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:62,w:128,h:14,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-33':{psd:'SB-33.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:63,w:59,h:19,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-39':{psd:'SB-39.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:20,w:111,h:26,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-4':{psd:'SB-4.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:22,w:107,h:28,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-40':{psd:'SB-40.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:18,w:120,h:24,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-41':{psd:'SB-41.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:16,w:116,h:17,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-45':{psd:'SB-45.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:30,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-48':{psd:'SB-48.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:20,w:115,h:25,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-50 rt of center bottom blue':{psd:'SB-50 rt of center bottom blue.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:108,cy:110,w:44,h:8,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-53':{psd:'SB-53.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:62,w:56,h:31,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-54 mono':{psd:'SB-54 mono.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:48,h:24,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-55':{psd:'SB-55.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:61,h:21,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-56':{psd:'SB-56.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:62,w:80,h:28,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-57':{psd:'SB-57.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:63,w:71,h:30,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-58':{psd:'SB-58.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:57,h:22,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-59':{psd:'SB-59.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:65,cy:64,w:59,h:17,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-6':{psd:'SB-6.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:72,h:58,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-60':{psd:'SB-60.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:62,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-61':{psd:'SB-61.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:56,w:130,h:28,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-62':{psd:'SB-62.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:51,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-63':{psd:'SB-63.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:61,w:52,h:25,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-64':{psd:'SB-64.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:21,w:108,h:26,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-65':{psd:'SB-65.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:84,h:39,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-67':{psd:'SB-67.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:34,cy:63,w:25,h:20,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:23,h:19,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:99,cy:64,w:22,h:20,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-6a':{psd:'SB-6a.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:75,h:56,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-73':{psd:'SB-73.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:20,w:122,h:26,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-76':{psd:'SB-76.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:93,cy:102,w:71,h:35,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-77':{psd:'SB-77.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:65,cy:70,w:62,h:27,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-77a':{psd:'SB-77a.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:67,cy:16,w:79,h:15,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-78':{psd:'SB-78.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:67,h:29,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-79':{psd:'SB-79.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:49,h:26,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-80':{psd:'SB-80.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:63,w:47,h:20,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-81':{psd:'SB-81.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:93,cy:116,w:71,h:18,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-82':{psd:'SB-82.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:64,w:66,h:37,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-85':{psd:'SB-85.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:67,cy:88,w:121,h:17,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-86':{psd:'SB-86.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:111,w:124,h:22,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-87':{psd:'SB-87.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:130,h:32,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-89':{psd:'SB-89.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:66,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-9':{psd:'SB-9.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:30,w:112,h:36,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-91':{psd:'SB-91.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:130,h:31,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-92':{psd:'SB-92.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:63,h:34,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-93':{psd:'SB-93.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:21,w:42,h:37,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:22,cy:64,w:42,h:37,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:111,cy:64,w:41,h:36,angle:0,color:[0,0,0,255],mode:'fit'},{font:'ANTIQUE ROMAN.TTF',cx:66,cy:106,w:42,h:37,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-93a':{psd:'SB-93a.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:25,w:107,h:26,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-94':{psd:'SB-94.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:19,w:116,h:24,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-95':{psd:'SB-95.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:79,cy:22,w:78,h:29,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-96':{psd:'SB-96.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:67,cy:64,w:59,h:27,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-97':{psd:'SB-97.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'EINSTEINROMANOPTI.OTF',cx:66,cy:67,w:64,h:21,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-98':{psd:'SB-98.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:24,w:118,h:34,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-99':{psd:'SB-99.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:97,w:125,h:15,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-9b':{psd:'SB-9b.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:66,cy:63,w:112,h:23,angle:0,color:[0,0,0,255],mode:'fit'}]},
+      'SB-38':{psd:'SB-38.bmp',palette:[[42,7,252],[0,0,0]],zones:[{font:'ANTIQUE ROMAN.TTF',cx:32,cy:63,w:41,h:102,angle:90,color:[0,0,0,255],mode:'fit'}]},
+    }
+  },
+
+};
+
+// Active client — set when user selects from dropdown
+let activeClient = null;
+
+// Convenience getter — returns the active client's template map
+function TEMPLATE_MAP() {
+  return activeClient ? CLIENT_REGISTRY[activeClient].templates : {};
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IndexedDB
+// ─────────────────────────────────────────────────────────────────────────────
+const DB_NAME='KnitAssetsV2',DB_VER=2;
+let db=null;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('files'))d.createObjectStore('files',{keyPath:'name'});};r.onsuccess=e=>{db=e.target.result;res(db);};r.onerror=e=>rej(e.target.error);});}
+function dbPut(obj){return new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put(obj).onsuccess=()=>res();});}
+function dbGetAll(){return new Promise((res,rej)=>{const tx=db.transaction('files','readonly');tx.objectStore('files').getAll().onsuccess=e=>res(e.target.result);});}
+function dbClearAll(){return new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').clear().onsuccess=()=>res();});}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+let orders=[],psdFiles={},fontFaces={},results=[];
+
+// Normalize a font name from the registry to match the storage key in fontFaces.
+// Handles both 'Adobe Garamond Pro Bold' and 'SORIA-BOLD.OTF' styles.
+function fontKey(name){
+  if(!name) return '';
+  // Strip known extensions
+  const stripped = name.replace(/\.(ttf|otf|TTF|OTF)$/, '');
+  // Replace spaces with underscores, keep existing underscores and hyphens
+  return stripped.replace(/\s+/g,'_');
+}
+// Look up a font face by registry name — tries normalized key with and without extension
+function lookupFont(name){
+  if(!name) return null;
+  // Try exact match first
+  if(fontFaces[name]) return fontFaces[name];
+  // Try normalized (spaces→underscores, no extension)
+  const nk = fontKey(name);
+  if(fontFaces[nk]) return fontFaces[nk];
+  // Try with common extensions appended
+  for(const ext of ['.ttf','.otf','.TTF','.OTF']){
+    if(fontFaces[nk+ext]) return fontFaces[nk+ext];
+    if(fontFaces[name.replace(/\s+/g,'_')+ext]) return fontFaces[name.replace(/\s+/g,'_')+ext];
+  }
+  // Case-insensitive fallback — registered Drive filenames may differ in
+  // case from the config's font name (e.g. "Kiddosy Regular.ttf" vs the
+  // actual uploaded "KIDDOSY_REGULAR.TTF"). Compare normalized forms
+  // (lowercase, extension stripped, spaces/underscores unified).
+  const normalize=s=>s.toLowerCase().replace(/\.(ttf|otf)$/,'').replace(/[\s_]+/g,'_');
+  const targetNorm=normalize(name);
+  for(const key in fontFaces){
+    if(normalize(key)===targetNorm) return fontFaces[key];
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tabs
+// ─────────────────────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',['process','quicktest','calibrate','admin'][i]===name);});
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logging
+// ─────────────────────────────────────────────────────────────────────────────
+function log(msg,type='info'){
+  const p=document.getElementById('logPanel');
+  const t=new Date().toTimeString().slice(0,8);
+  const el=document.createElement('div');
+  el.className='log-entry';
+  el.innerHTML=`<span class="log-time">${t}</span><span class="log-msg ${type}">${msg}</span>`;
+  p.appendChild(el);p.scrollTop=p.scrollHeight;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Drag and Drop
+// ─────────────────────────────────────────────────────────────────────────────
+['xlsxDrop','folderDrop','calBlankDrop','calFinishedDrop'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('dragover');});
+  el.addEventListener('dragleave',()=>el.classList.remove('dragover'));
+  el.addEventListener('drop',e=>{
+    e.preventDefault();el.classList.remove('dragover');
+    const f=e.dataTransfer.files;
+    if(id==='xlsxDrop')handleXlsx(f[0]);
+    else if(id==='folderDrop')handleFolder(f);
+    else if(id==='calBlankDrop')calLoadBlank(f[0]);
+    else calLoadFinished(f[0]);
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Spreadsheet
+// ─────────────────────────────────────────────────────────────────────────────
+function handleXlsx(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets['Orders']||wb.Sheets['Sheet1']||wb.Sheets[wb.SheetNames[0]];
+      if(!ws){log('No valid sheet found','err');return;}
+      const data=XLSX.utils.sheet_to_json(ws);
+      if(!activeClient){log('Select a client first','warn');return;}
+      const client=CLIENT_REGISTRY[activeClient];
+      const cols=client.columns;
+      const sizeFilter=client.sizeFilter||[];
+      orders=data.filter(r=>{
+          if(!sizeFilter.length) return true;
+          const sz=(r[cols.size]||'').toString().toLowerCase();
+          return sizeFilter.some(f=>sz.includes(f));
+        })
+        .map(r=>{
+          // Butterscotch/Odoo export: Product column has size+fiber code (e.g. "SB-AC", "SB-AC/M", "BB-AC")
+          // and Design 1/Value has the template number (e.g. "80"). Extract the leading size
+          // prefix (before the first "-") from Product and combine with the design number to
+          // get the registry key, e.g. "SB-80". Fiber code (AC/MW/etc.) is intentionally discarded
+          // here — it's used elsewhere for yarn/material selection, not template matching.
+          let style=(r[cols.style]||'').toString().trim();
+          let sizePrefix='SB';
+          if(cols.designValue && r[cols.designValue]!=null && r[cols.designValue]!==''){
+            const productRaw=(r[cols.style]||'').toString().trim();
+            sizePrefix=productRaw.split('-')[0].trim();
+            const designNum=(r[cols.designValue]||'').toString().trim();
+            if(sizePrefix && designNum) style=`${sizePrefix}-${designNum}`;
+          }
+          return{
+          orderNum:(r[cols.orderNum]||'').toString().trim(),
+          name:(r[cols.name]||'').toString().trim(),
+          style:style,
+          size:(r[cols.size]||'').toString().trim(),
+          sizePrefix:sizePrefix,
+          font:cols.font?(r[cols.font]||'').toString().trim():'',
+          caseMode:cols.caseMode?(r[cols.caseMode]||'').toString().trim():'',
+        };});
+      document.getElementById('xlsxPills').innerHTML=
+        `<div class="pill"><span class="pdot ok"></span>${file.name} — ${orders.length} orders</div>`;
+      window.spreadsheetBaseName=file.name.replace(/\.[^.]+$/,'');
+      // Pre-flag orders with no matching template as skipped
+      results=[];
+      orders.forEach((o,i)=>{
+        if(!getTemplate(o)) results[i]={status:'skipped'};
+      });
+      log(`Loaded ${orders.length} orders from ${file.name}`,'ok');
+      const preSkipped=results.filter(r=>r&&r.status==='skipped').length;
+      if(preSkipped){
+        const exStyle=orders.find((_,i)=>results[i]&&results[i].status==='skipped').style;
+        log(`${preSkipped} order${preSkipped!==1?'s':''} have no matching template (e.g. "${exStyle}") — will be skipped`,'warn');
+      }
+      renderTable();updateStats();checkReady();
+    }catch(err){log(`Spreadsheet error: ${err.message}`,'err');}
+  };
+  r.readAsArrayBuffer(file);
 }
-function showToast(msg){
-  toastEl.textContent = msg;
-  toastEl.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1400);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Files — PSDs + Fonts
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleFolder(files){
+  let p=0,f=0;
+  for(const file of Array.from(files)){
+    const ext=file.name.split('.').pop().toLowerCase();
+    const buf=await file.arrayBuffer();
+    if(ext==='psd'||ext==='bmp'){const nk=file.name.toLowerCase().replace(/\s+/g,'_');psdFiles[nk]=buf;await dbPut({name:nk,type:'psd',data:buf});p++;}
+    else if(['ttf','otf'].includes(ext)){const nk=file.name.replace(/\s+/g,'_');await registerFont(nk,buf);await dbPut({name:nk,type:'font',data:buf});f++;}
+  }
+  log(`Loaded ${p} template${p!==1?'s':''} and ${f} font${f!==1?'s':''} — cached for next session`,'ok');
+  renderFileStatus();checkReady();
 }
-function fallbackCopy(text){
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.top='0';
-    document.body.appendChild(ta); ta.focus(); ta.select();
-    const ok = document.execCommand('copy');
-    document.body.removeChild(ta);
-    return ok;
-  } catch(e) { return false; }
+
+async function registerFont(name,buffer){
+  const fn='bb_'+name.replace(/[^a-zA-Z0-9]/g,'_');
+  try{const face=new FontFace(fn,buffer);await face.load();document.fonts.add(face);fontFaces[name]=fn;}
+  catch(e){log(`Font error ${name}: ${e.message}`,'err');}
 }
-function copyHex(hex){
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(hex).then(() => showToast(hex + ' copied to clipboard'))
-      .catch(() => showToast(fallbackCopy(hex) ? (hex + ' copied to clipboard') : hex));
+
+async function loadCache(){
+  const items=await dbGetAll();
+  let p=0,f=0;
+  for(const item of items){
+    if(item.type==='psd'){psdFiles[item.name.toLowerCase().replace(/\s+/g,'_')]=item.data;p++;}
+    else if(item.type==='font'){await registerFont(item.name.replace(/\s+/g,'_'),item.data);f++;}
+  }
+  if(p+f>0){log(`Restored from cache: ${p} PSD${p!==1?'s':''}, ${f} font${f!==1?'s':''}`,'ok');renderFileStatus();}
+}
+
+async function clearCache(){
+  await dbClearAll();psdFiles={};fontFaces={};renderFileStatus();log('Cache cleared','warn');checkReady();
+}
+
+function renderFileStatus(){
+  const pn=Object.keys(psdFiles), fn=Object.keys(fontFaces);
+  const bar=document.getElementById('cachedBar');
+  const total=pn.length+fn.length;
+  if(total>0){
+    bar.style.display='flex';
+    document.getElementById('cachedCount').textContent=
+      `${pn.length} template${pn.length!==1?'s':''}, ${fn.length} font${fn.length!==1?'s':''} loaded`;
   } else {
-    showToast(fallbackCopy(hex) ? (hex + ' copied to clipboard') : hex);
+    bar.style.display='none';
+  }
+
+  // Check for missing assets against active client templates — show warnings only
+  const warnings=[];
+  if(activeClient){
+    const tmap=TEMPLATE_MAP();
+    const allFonts=Object.values(tmap).flatMap(t=>t.zones.map(z=>z.font));
+    // Missing blanks
+    Object.values(tmap).forEach(t=>{
+      const nk=t.psd.toLowerCase().replace(/\s+/g,'_');
+      if(!psdFiles[nk]) warnings.push(`Missing blank: ${t.psd}`);
+    });
+    // Missing fonts
+    allFonts.forEach(f=>{
+      if(!lookupFont(f)) warnings.push(`Missing font: ${f}`);
+    });
+  }
+
+  // Render: summary line + warnings only
+  const pills=document.getElementById('filePills');
+  if(warnings.length){
+    pills.innerHTML=warnings.map(w=>
+      `<div class="pill"><span class="pdot warn"></span>${w}</div>`
+    ).join('');
+  } else if(total>0){
+    pills.innerHTML=`<div class="pill"><span class="pdot ok"></span>All assets accounted for</div>`;
+  } else {
+    pills.innerHTML='';
   }
 }
-function render(){
-  renderTabs();
-  const fiber = FIBERS.find(f => f.key === activeFiber);
-  const q = query.trim().toLowerCase();
-  const colors = fiber.colors.filter(c => !q || c.name.toLowerCase().includes(q) || c.hex.toLowerCase().includes(q));
-  mainEl.innerHTML = '';
-  const heading = document.createElement('div');
-  heading.className = 'fiber-heading';
-  heading.innerHTML = '<b>' + fiber.display + '</b> &nbsp;\u00b7&nbsp; ' + colors.length + ' of ' + fiber.colors.length + ' colors';
-  mainEl.appendChild(heading);
-  if(colors.length === 0){
-    const empty = document.createElement('div');
-    empty.className = 'empty';
-    empty.textContent = 'No colors match "' + query + '" in ' + fiber.display + '.';
-    mainEl.appendChild(empty);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Table
+// ─────────────────────────────────────────────────────────────────────────────
+function renderTable(){
+  if(!orders.length)return;
+      document.getElementById('tableMeta').textContent=`${orders.length} orders`;
+  document.getElementById('tableContainer').innerHTML=`
+    <table><thead><tr><th>Order #</th><th>Name</th><th>Style</th><th>Size</th><th>Status</th><th>Note</th></tr></thead>
+    <tbody>${orders.map((o,i)=>{
+      const preSkip=results[i]&&results[i].status==='skipped';
+      const badge=preSkip?`<span class="sbadge skipped" id="st_${i}"><span class="sdot"></span>SKIPPED</span>`:`<span class="sbadge pending" id="st_${i}"><span class="sdot"></span>PENDING</span>`;
+      const note=preSkip?'no template':'';
+      return `<tr><td>${o.orderNum}</td><td>${o.name}</td><td>${o.style}</td>
+      <td><span style="font-size:9px;color:var(--muted)">${o.size}</span></td>
+      <td>${badge}</td>
+      <td style="font-size:9px;color:var(--muted)" id="note_${i}">${note}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function setRow(i,s,n=''){
+  const el=document.getElementById(`st_${i}`);const ne=document.getElementById(`note_${i}`);
+  if(!el)return;
+  const L={pending:'PENDING',created:'CREATED',skipped:'SKIPPED',error:'ERROR',processing:'PROCESSING'};
+  el.className=`sbadge ${s}`;
+  el.innerHTML=s==='processing'?`<span class="spinner"></span>PROCESSING`:`<span class="sdot"></span>${L[s]||s.toUpperCase()}`;
+  if(ne)ne.textContent=n;
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent=orders.length;
+  document.getElementById('statReady').textContent=activeClient?orders.filter(o=>getTemplate(o)).length:0;
+  document.getElementById('statCreated').textContent=results.filter(r=>r.status==='created').length;
+  document.getElementById('statSkipped').textContent=results.filter(r=>r.status==='skipped').length;
+}
+
+function checkReady(){
+  document.getElementById('processBtn').disabled=!(activeClient&&orders.length>0&&Object.keys(psdFiles).length>0&&Object.keys(fontFaces).length>0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Template → Canvas (supports PSD and BMP)
+// ─────────────────────────────────────────────────────────────────────────────
+async function psdToCanvas(buffer,filename){
+  // If BMP (or any non-PSD): load via blob URL onto an Image, draw to canvas
+  const ext=(filename||'').split('.').pop().toLowerCase();
+  if(ext==='bmp'||ext==='png'||ext==='jpg'||ext==='jpeg'){
+    return new Promise((resolve,reject)=>{
+      const blob=new Blob([buffer],{type:'image/'+( ext==='jpg'?'jpeg':ext )});
+      const url=URL.createObjectURL(blob);
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        canvas.width=img.width;canvas.height=img.height;
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(0,0,img.width,img.height);
+        ctx.drawImage(img,0,0);
+        URL.revokeObjectURL(url);
+        resolve(canvas);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Failed to load BMP: '+filename));};
+      img.src=url;
+    });
+  }
+  // PSD fallback
+  const psd=agPsd.readPsd(buffer,{skipCompositeImageData:false,skipLayerImageData:false});
+  const canvas=document.createElement('canvas');
+  canvas.width=psd.width;canvas.height=psd.height;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,psd.width,psd.height);
+  if(psd.canvas){ctx.drawImage(psd.canvas,0,0);}
+  else if(psd.children){
+    for(const l of psd.children){
+      if(l.hidden||l.text||!l.canvas)continue;
+      ctx.globalAlpha=l.opacity!==undefined?l.opacity/255:1;
+      ctx.drawImage(l.canvas,l.left||0,l.top||0);
+      ctx.globalAlpha=1;
+    }
+  }
+  return canvas;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Font sizing — per zone mode
+// ─────────────────────────────────────────────────────────────────────────────
+function getFontSize(display,faceName,zone){
+  if(zone.forceSize) return zone.forceSize;
+  const tmp=document.createElement('canvas');tmp.width=3000;tmp.height=400;
+  const ctx=tmp.getContext('2d');
+  const w=zone.w,h=zone.h,angle=zone.angle,mode=zone.mode;
+  // For rotated zones (angle not 0/180): w becomes the letter HEIGHT constraint
+  // and h becomes the run LENGTH constraint — swap aw/ah accordingly.
+  const isRotated = angle && Math.abs(angle)%180 !== 0;
+  let aw,ah;
+  if(mode==='fit'){
+    aw=isRotated ? h*0.93 : w*0.93;
+    ah=isRotated ? w*0.93 : h*0.93;
+  }
+  else if(mode==='height'){aw=99999;ah=h*(zone.hm||0.45);}
+  else if(mode==='width'){aw=w*(zone.wm||0.90);ah=99999;}
+  else if(mode==='diag'){const l=Math.max(w,h);const s=Math.min(w,h);aw=l*0.90;ah=s*0.90;}
+  else{
+    // bottomAnchor and other modes with rotation — same swap logic
+    aw=isRotated ? h*0.93 : w*0.93;
+    ah=isRotated ? w*0.93 : h*0.93;
+  }
+  const startSz=zone.forceMax||300;
+  for(let sz=startSz;sz>=6;sz--){
+    ctx.font=`${sz}px "${faceName}"`;
+    let tw=ctx.measureText(display).width;
+    if(zone.letterSpacing) tw+=zone.letterSpacing*Math.max(0,display.length-1);
+    const th=sz*0.85;
+    if(tw<=aw&&th<=ah){
+      if(zone.forceMin&&sz<zone.forceMin)return zone.forceMin;
+      return sz;
+    }
+  }
+  return zone.forceMin||6;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Render text — 8x scale + threshold + NEAREST = zero stray pixels
+// ─────────────────────────────────────────────────────────────────────────────
+function renderTextZone(mainCanvas,display,zone,faceName){
+  // Optical mode: center vertically on neutral letters (no ascenders/descenders)
+  if(zone.mode==='optical'&&zone.neutralLetters){
+    const fontSize=getFontSize(display,faceName,zone);
+    const tmp=document.createElement('canvas');tmp.width=3000;tmp.height=400;
+    const ctx=tmp.getContext('2d');
+    ctx.font=`${fontSize}px "${faceName}"`;
+    const neutralChars=[...display.toUpperCase()].filter(c=>zone.neutralLetters.includes(c));
+    const letters=neutralChars.length>0?neutralChars:[...display.toUpperCase()];
+    let minTop=Infinity,maxBot=-Infinity;
+    for(const ch of letters){
+      const m=ctx.measureText(ch);
+      const top=-(m.actualBoundingBoxAscent||fontSize*0.75);
+      const bot=(m.actualBoundingBoxDescent||fontSize*0.25);
+      if(top<minTop)minTop=top;
+      if(bot>maxBot)maxBot=bot;
+    }
+    const nc=(minTop+maxBot)/2;
+    zone=Object.assign({},zone,{cy:zone.cy-nc});
+  }
+  // Mid-body centering mode: pixel-scan based, font-metric-agnostic (for ETERNATE)
+  if(zone.mode==='midbody'){
+    const SCALE=8;
+    const[r,g,b]=zone.color;
+    const cx=zone.cx,cyTarget=zone.cy,w=zone.w,h=zone.h;
+    const hCrop=zone.hCrop||h;
+    const fontSize=getFontSize(display,faceName,zone);
+
+    // Render at 8x onto a tall canvas
+    const rw=w*SCALE, rh=h*SCALE*3;
+    const off=document.createElement('canvas');off.width=rw;off.height=rh;
+    const octx=off.getContext('2d');
+    octx.fillStyle='#ffffff';octx.fillRect(0,0,rw,rh);
+    octx.font=`${fontSize*SCALE}px "${faceName}"`;
+    octx.fillStyle=`rgb(${r},${g},${b})`;
+    octx.textBaseline='top';
+    const tw=octx.measureText(display).width;
+    const tx=(rw-tw)/2;
+    const ty=rh/3;
+    octx.fillText(display,tx,ty);
+
+    // Hard threshold → binary
+    const id=octx.getImageData(0,0,rw,rh);
+    const px=id.data;
+    for(let i=0;i<px.length;i+=4){
+      const dr=px[i]-r,dg=px[i+1]-g,db=px[i+2]-b;
+      const dw=px[i]-255,dg2=px[i+1]-255,db2=px[i+2]-255;
+      if(dr*dr+dg*dg+db*db<dw*dw+dg2*dg2+db2*db2){px[i]=r;px[i+1]=g;px[i+2]=b;px[i+3]=255;}
+      else{px[i]=255;px[i+1]=255;px[i+2]=255;px[i+3]=0;}
+    }
+
+    // Count ink pixels per row
+    const rowCounts=new Int32Array(rh);
+    for(let y=0;y<rh;y++){
+      let cnt=0;
+      for(let x=0;x<rw;x++){if(px[(y*rw+x)*4+3]>0)cnt++;}
+      rowCounts[y]=cnt;
+    }
+    // Find max row count
+    let maxCount=0;
+    for(let y=0;y<rh;y++){if(rowCounts[y]>maxCount)maxCount=rowCounts[y];}
+    // Find dense body rows (>40% of max) — these are the actual letter bodies
+    const thresh=maxCount*0.40;
+    let denseTop=-1,denseBot=-1;
+    for(let y=0;y<rh;y++){if(rowCounts[y]>thresh){if(denseTop<0)denseTop=y;denseBot=y;}}
+    if(denseTop<0){denseTop=0;denseBot=rh-1;}
+    const bodyCenter=(denseTop+denseBot)/2;
+    const offsetY=Math.round(cyTarget*SCALE-bodyCenter);
+
+    // Shift pixel data by offsetY
+    const shifted=new Uint8ClampedArray(px.length);
+    shifted.fill(255);
+    if(offsetY>=0){
+      const srcLen=(rh-offsetY)*rw*4;
+      shifted.set(px.subarray(0,srcLen),offsetY*rw*4);
+    } else {
+      const srcOff=(-offsetY)*rw*4;
+      const srcLen=(rh+offsetY)*rw*4;
+      if(srcLen>0) shifted.set(px.subarray(srcOff,srcOff+srcLen),0);
+    }
+
+    // Crop to hCrop zone centered at cyTarget, with optional bias (px) to shift window down
+    const hCropBias=(zone.hCropBias||0)*SCALE;
+    const halfH=Math.floor(hCrop*SCALE/2);
+    const cropTop=cyTarget*SCALE-halfH+hCropBias;
+    const cropBot=cropTop+hCrop*SCALE;
+    const cropCanvas=document.createElement('canvas');cropCanvas.width=rw;cropCanvas.height=hCrop*SCALE;
+    const cctx=cropCanvas.getContext('2d');
+    const cropId=cctx.createImageData(rw,hCrop*SCALE);
+    cropId.data.set(shifted.subarray(cropTop*rw*4,cropBot*rw*4));
+    cctx.putImageData(cropId,0,0);
+
+    // Downscale NEAREST to w x hCrop
+    const small=document.createElement('canvas');small.width=w;small.height=hCrop;
+    const sctx=small.getContext('2d');
+    sctx.imageSmoothingEnabled=false;
+    sctx.drawImage(cropCanvas,0,0,w,hCrop);
+
+    // Composite onto main canvas
+    const mainCtx=mainCanvas.getContext('2d');
+    mainCtx.imageSmoothingEnabled=false;
+    mainCtx.drawImage(small,Math.round(cx-w/2),Math.round(cyTarget-hCrop/2));
     return;
   }
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  colors.forEach(c => {
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.onclick = () => copyHex(c.hex);
-    const sw = document.createElement('div');
-    sw.className = 'swatch';
-    sw.style.background = c.hex;
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.innerHTML = '<div class="name">' + c.name + '</div><div class="hex">' + c.hex + '</div>';
-    chip.appendChild(sw);
-    chip.appendChild(meta);
-    grid.appendChild(chip);
-  });
-  mainEl.appendChild(grid);
+
+  // Use higher supersampling for small canvases — more source pixels per output pixel
+  // means thin strokes have a much better chance of surviving the downscale threshold.
+  // 132×126 (SB Butterscotch) needs 16x; larger canvases are fine at 8x.
+  const SCALE=mainCanvas.width<=150?16:8;
+  const[r,g,b,a]=zone.color;
+  // Apply uppercase if zone requests it
+  if(zone.uppercase) display=display.toUpperCase();
+  const fontSize=getFontSize(display,faceName,zone);
+
+  // Measure at 8x
+  const meas=document.createElement('canvas');meas.width=6000;meas.height=1000;
+  const mctx=meas.getContext('2d');
+  mctx.font=`${fontSize*SCALE}px "${faceName}"`;
+  let tw=Math.ceil(mctx.measureText(display).width);
+  if(zone.letterSpacing) tw+=Math.ceil(zone.letterSpacing*SCALE*Math.max(0,display.length-1));
+  const th=Math.ceil(fontSize*SCALE*1.2);
+  const pad=SCALE*8;
+
+  // Render at 8x
+  const off=document.createElement('canvas');off.width=tw+pad*2;off.height=th+pad*2;
+  const octx=off.getContext('2d');
+  const isWhiteText=(r===255&&g===255&&b===255);
+  // If text is white, draw it in black on white bg so it's visible, then we'll
+  // invert/recolor during threshold below. Drawing white-on-white is invisible.
+  const drawR=isWhiteText?0:r, drawG=isWhiteText?0:g, drawB=isWhiteText?0:b;
+  octx.fillStyle='#ffffff';octx.fillRect(0,0,off.width,off.height);
+  octx.font=`${fontSize*SCALE}px "${faceName}"`;
+  octx.fillStyle=`rgb(${drawR},${drawG},${drawB})`;
+  octx.textBaseline='top';
+  octx.textAlign='left';
+  if(zone.letterSpacing){
+    // Manual per-character draw with extra spacing — default fillText advance
+    // widths are too tight for some display fonts at larger sizes.
+    const extraPx=zone.letterSpacing*SCALE;
+    let cx2=pad;
+    for(const ch of display){
+      octx.fillText(ch,cx2,pad);
+      cx2+=octx.measureText(ch).width+extraPx;
+    }
+  } else {
+    octx.fillText(display,pad,pad);
+  }
+
+  // Threshold — snap to text color or transparent
+  const id=octx.getImageData(0,0,off.width,off.height);
+  const data=id.data;
+  for(let i=0;i<data.length;i+=4){
+    let isText;
+    if(isWhiteText){
+      // Drew in black-on-white above: any non-white pixel is text → recolor to actual white
+      isText=!(data[i]===255&&data[i+1]===255&&data[i+2]===255);
+    } else {
+      const dr=data[i]-r,dg=data[i+1]-g,db=data[i+2]-b;
+      const dw=data[i]-255,dg2=data[i+1]-255,db2=data[i+2]-255;
+      isText=(dr*dr+dg*dg+db*db)<(dw*dw+dg2*dg2+db2*db2);
+    }
+    if(isText){data[i]=r;data[i+1]=g;data[i+2]=b;data[i+3]=255;}
+    else{data[i]=255;data[i+1]=255;data[i+2]=255;data[i+3]=0;}
+  }
+  octx.putImageData(id,0,0);
+
+  // Flip at 8x if requested
+  let off8=off;
+  if(zone.flip){
+    const fl=document.createElement('canvas');fl.width=off.width;fl.height=off.height;
+    const fc=fl.getContext('2d');
+    fc.translate(off.width/2,off.height/2);fc.rotate(Math.PI);
+    fc.drawImage(off,-off.width/2,-off.height/2);
+    off8=fl;
+  }
+
+  // Rotate at 8x NEAREST then re-threshold to kill strays, then downscale
+  let rotated8=off8;
+  if(zone.angle!==0){
+    const angle=zone.angle*Math.PI/180;
+    const cos=Math.abs(Math.cos(angle)),sin=Math.abs(Math.sin(angle));
+    const rw=Math.ceil(off8.width*cos+off8.height*sin);
+    const rh=Math.ceil(off8.width*sin+off8.height*cos);
+    const rot=document.createElement('canvas');rot.width=rw;rot.height=rh;
+    const rctx=rot.getContext('2d');
+    rctx.imageSmoothingEnabled=false;
+    rctx.translate(rw/2,rh/2);rctx.rotate(angle);
+    rctx.drawImage(off8,-off8.width/2,-off8.height/2);
+    // Re-threshold: transparent bg pixels → stay transparent, colored pixels → snap to text or transparent
+    const rid=rctx.getImageData(0,0,rw,rh);
+    const rd=rid.data;
+    for(let i=0;i<rd.length;i+=4){
+      if(rd[i+3]<128){rd[i]=255;rd[i+1]=255;rd[i+2]=255;rd[i+3]=0;continue;}
+      if(isWhiteText){
+        // Already correctly colored white text with full alpha from first pass — keep as-is
+        rd[i]=r;rd[i+1]=g;rd[i+2]=b;rd[i+3]=255;
+        continue;
+      }
+      const dr2=rd[i]-r,dg2=rd[i+1]-g,db2=rd[i+2]-b;
+      const dw2=rd[i]-255,dgw=rd[i+1]-255,dbw=rd[i+2]-255;
+      if((dr2*dr2+dg2*dg2+db2*db2)<(dw2*dw2+dgw*dgw+dbw*dbw)){rd[i]=r;rd[i+1]=g;rd[i+2]=b;rd[i+3]=255;}
+      else{rd[i]=255;rd[i+1]=255;rd[i+2]=255;rd[i+3]=0;}
+    }
+    rctx.putImageData(rid,0,0);
+    rotated8=rot;
+  }
+
+  // Downscale NEAREST
+  const small=document.createElement('canvas');
+  small.width=Math.ceil(rotated8.width/SCALE);small.height=Math.ceil(rotated8.height/SCALE);
+  const sctx=small.getContext('2d');
+  // Use smoothing (area averaging) for the downscale, not nearest-neighbor —
+  // nearest-neighbor on an 8x->1x reduction samples only 1 of 8 source pixels,
+  // which can skip thin strokes/serifs entirely and erode glyph weight. Area
+  // averaging correctly blends all 8 source pixels, then we re-threshold below
+  // to snap back to clean binary (text color or transparent) — no grey survives.
+  sctx.imageSmoothingEnabled=true;
+  sctx.imageSmoothingQuality='high';
+  sctx.drawImage(rotated8,0,0,small.width,small.height);
+
+  // Re-threshold after smoothed downscale: a pixel that was >=50% covered by
+  // ink in the source becomes full ink; otherwise transparent. This preserves
+  // thin strokes that nearest-neighbor was dropping, without leaving any
+  // semi-transparent/grey edge pixels in the final binary output.
+  {
+    const did=sctx.getImageData(0,0,small.width,small.height);
+    const dd=did.data;
+    for(let i=0;i<dd.length;i+=4){
+      // Lower threshold for small canvases — 30% ink coverage instead of 50%
+      // so thin serif strokes that only partially cover a pixel still survive.
+      const inkThreshold = mainCanvas.width<=150 ? 77 : 128;
+      if(dd[i+3]>=inkThreshold){dd[i]=r;dd[i+1]=g;dd[i+2]=b;dd[i+3]=255;}
+      else{dd[i]=255;dd[i+1]=255;dd[i+2]=255;dd[i+3]=0;}
+    }
+    sctx.putImageData(did,0,0);
+  }
+
+  // Cleanup pass — remove isolated non-white pixels (stray pixels with no non-white neighbors)
+  const cid=sctx.getImageData(0,0,small.width,small.height);
+  const cd=cid.data;
+  const SW=small.width,SH=small.height;
+  const isWhite=(i)=>cd[i]===255&&cd[i+1]===255&&cd[i+2]===255;
+  const kills=[];
+  for(let y=0;y<SH;y++){
+    for(let x=0;x<SW;x++){
+      const i=(y*SW+x)*4;
+      if(isWhite(i)||cd[i+3]===0) continue;
+      // Check 8 neighbors
+      let hasNeighbor=false;
+      for(let dy=-1;dy<=1;dy++){
+        for(let dx=-1;dx<=1;dx++){
+          if(dx===0&&dy===0) continue;
+          const nx=x+dx,ny=y+dy;
+          if(nx<0||ny<0||nx>=SW||ny>=SH) continue;
+          const ni=(ny*SW+nx)*4;
+          if(!isWhite(ni)&&cd[ni+3]>0){hasNeighbor=true;break;}
+        }
+        if(hasNeighbor) break;
+      }
+      if(!hasNeighbor) kills.push(i);
+    }
+  }
+  for(const i of kills){cd[i]=255;cd[i+1]=255;cd[i+2]=255;cd[i+3]=0;}
+  sctx.putImageData(cid,0,0);
+
+  const final=small;
+  const mainCtx=mainCanvas.getContext('2d');
+  mainCtx.imageSmoothingEnabled=false;
+
+  // ── BUTTERSCOTCH ──────────────────────────────────────────────────────────
+  if(activeClient==='Butterscotch'){
+    const fd=final.getContext('2d').getImageData(0,0,final.width,final.height).data;
+    let inkTop=final.height,inkBot=0;
+    for(let y=0;y<final.height;y++){
+      for(let x=0;x<final.width;x++){
+        const i=(y*final.width+x)*4;
+        if(fd[i+3]>0&&!(fd[i]===255&&fd[i+1]===255&&fd[i+2]===255)){
+          if(y<inkTop)inkTop=y;
+          if(y>inkBot)inkBot=y;
+        }
+      }
+    }
+    if(inkTop>inkBot){inkTop=0;inkBot=final.height-1;}
+    const drawY=Math.round(zone.cy-(inkTop+(inkBot-inkTop+1)/2));
+    mainCtx.drawImage(final,Math.round(zone.cx-final.width/2),drawY);
+
+  // ── IN2GREEN ──────────────────────────────────────────────────────────────
+  } else if(activeClient==='In2Green'){
+    if(zone.mode==='right'&&zone.rightEdge!=null){
+      const fd=final.getContext('2d').getImageData(0,0,final.width,final.height).data;
+      let inkRight=0;
+      for(let x=final.width-1;x>=0;x--){
+        let found=false;
+        for(let y=0;y<final.height;y++){
+          const i=(y*final.width+x)*4;
+          if(fd[i+3]>0&&!(fd[i]===255&&fd[i+1]===255&&fd[i+2]===255)){found=true;break;}
+        }
+        if(found){inkRight=x;break;}
+      }
+      mainCtx.drawImage(final,zone.rightEdge-inkRight,Math.round(zone.cy-final.height/2));
+    } else if(zone.mode==='bottomAnchor'&&zone.bottomY!=null){
+      // Anchor the bottom-most ink pixel (first letter, for 90°-rotated text)
+      // to a fixed Y coordinate, so it never moves regardless of name length.
+      const fd=final.getContext('2d').getImageData(0,0,final.width,final.height).data;
+      const isWhiteZoneText=(zone.color[0]===255&&zone.color[1]===255&&zone.color[2]===255);
+      let inkBottom=0;
+      for(let y=final.height-1;y>=0;y--){
+        let found=false;
+        for(let x=0;x<final.width;x++){
+          const i=(y*final.width+x)*4;
+          // Ink = any opaque pixel. For white text, alpha alone identifies it
+          // (color check would wrongly exclude legitimate white text pixels).
+          if(isWhiteZoneText ? fd[i+3]>0 : (fd[i+3]>0&&!(fd[i]===255&&fd[i+1]===255&&fd[i+2]===255))){found=true;break;}
+        }
+        if(found){inkBottom=y;break;}
+      }
+      const drawY=zone.bottomY-inkBottom;
+      mainCtx.drawImage(final,Math.round(zone.cx-final.width/2),drawY);
+    } else {
+      mainCtx.drawImage(final,Math.round(zone.cx-final.width/2),Math.round(zone.cy-final.height/2));
+    }
+
+  // ── BAUBLEBAR (and all others) ────────────────────────────────────────────
+  } else {
+    if(zone.mode==='right'&&zone.rightEdge!=null){
+      const fd=final.getContext('2d').getImageData(0,0,final.width,final.height).data;
+      let inkRight=0;
+      for(let x=final.width-1;x>=0;x--){
+        let found=false;
+        for(let y=0;y<final.height;y++){
+          const i=(y*final.width+x)*4;
+          if(fd[i+3]>0&&!(fd[i]===255&&fd[i+1]===255&&fd[i+2]===255)){found=true;break;}
+        }
+        if(found){inkRight=x;break;}
+      }
+      mainCtx.drawImage(final,zone.rightEdge-inkRight,Math.round(zone.cy-final.height/2));
+    } else {
+      mainCtx.drawImage(final,Math.round(zone.cx-final.width/2),Math.round(zone.cy-final.height/2));
+    }
+  }
 }
-searchEl.addEventListener('input', (e) => { query = e.target.value; render(); });
-render();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Canvas → Indexed TIF (exact palette, no compression)
+// ─────────────────────────────────────────────────────────────────────────────
+function canvasToTIF(canvas,paletteColors){
+  // Write indexed (palette) TIFF — much smaller than RGB
+  const ctx=canvas.getContext('2d');
+  const id=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const w=canvas.width,h=canvas.height;
+  const pal=paletteColors.map(c=>({r:c[0],g:c[1],b:c[2]}));
+  const nColors=pal.length;
+
+  // Snap each pixel to nearest palette index
+  const indices=new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++){
+    const pr=id.data[i*4],pg=id.data[i*4+1],pb=id.data[i*4+2];
+    let best=0,bestD=Infinity;
+    for(let j=0;j<pal.length;j++){const d=(pr-pal[j].r)**2+(pg-pal[j].g)**2+(pb-pal[j].b)**2;if(d<bestD){bestD=d;best=j;}}
+    indices[i]=best;
+  }
+
+  // Build 256-entry colormap (TIFF colormap: 3 arrays of 256 uint16 values, scaled 0-65535)
+  const cmapSize=256*3*2; // 256 colors * 3 channels * 2 bytes each
+  const cmap=new Uint8Array(cmapSize);
+  const cmapView=new DataView(cmap.buffer);
+  for(let j=0;j<256;j++){
+    const c=j<nColors?pal[j]:{r:0,g:0,b:0};
+    // R channel: offset 0, G: offset 256*2, B: offset 512*2
+    cmapView.setUint16(j*2,       c.r*257,true); // scale 0-255 to 0-65535
+    cmapView.setUint16(256*2+j*2, c.g*257,true);
+    cmapView.setUint16(512*2+j*2, c.b*257,true);
+  }
+
+  // TIFF structure: header + IFD + colormap + strip data
+  const nT=12; // number of IFD tags
+  const ifdOff=8;
+  const cmapOff=ifdOff+2+nT*12+4; // colormap after IFD
+  const stripOff=cmapOff+cmapSize;
+  const total=stripOff+indices.length;
+
+  const buf=new ArrayBuffer(total);
+  const dv=new DataView(buf);
+  const u8=new Uint8Array(buf);
+  let p=0;
+  const w16=v=>{dv.setUint16(p,v,true);p+=2;};
+  const w32=v=>{dv.setUint32(p,v,true);p+=4;};
+
+  // Header
+  p=0;u8[p++]=0x49;u8[p++]=0x49;w16(42);w32(ifdOff);
+
+  // IFD
+  p=ifdOff;w16(nT);
+  const tag=(t,type,cnt,val)=>{dv.setUint16(p,t,true);p+=2;dv.setUint16(p,type,true);p+=2;dv.setUint32(p,cnt,true);p+=4;dv.setUint32(p,val,true);p+=4;};
+
+  // Extra values area - for BitsPerSample (single value 8)
+  let ep=ifdOff+2+nT*12+4;
+  // We'll store BitsPerSample as SHORT inline (count=1, val=8)
+  // XRes and YRes
+  const xrO=ep; dv.setUint32(ep,72,true);ep+=4;dv.setUint32(ep,1,true);ep+=4;
+  const yrO=ep; dv.setUint32(ep,72,true);ep+=4;dv.setUint32(ep,1,true);ep+=4;
+
+  tag(256,3,1,w);           // ImageWidth
+  tag(257,3,1,h);           // ImageLength
+  tag(258,3,1,8);           // BitsPerSample = 8
+  tag(259,3,1,1);           // Compression = None
+  tag(262,3,1,3);           // PhotometricInterpretation = Palette
+  tag(273,4,1,stripOff);    // StripOffsets
+  tag(277,3,1,1);           // SamplesPerPixel = 1
+  tag(278,3,1,h);           // RowsPerStrip
+  tag(279,4,1,indices.length); // StripByteCounts
+  tag(282,5,1,xrO);         // XResolution
+  tag(283,5,1,yrO);         // YResolution
+  tag(320,3,256*3,cmapOff); // ColorMap (256 entries * 3 channels)
+  w32(0);                   // Next IFD = none
+
+  // Write colormap
+  u8.set(cmap,cmapOff);
+
+  // Write pixel indices
+  u8.set(indices,stripOff);
+
+  return buf;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Template Lookup — matches Style + Size, falls back to Style-only for clients
+// that don't use size-keyed templates
+// ─────────────────────────────────────────────────────────────────────────────
+function getTemplate(order){
+  const tm = TEMPLATE_MAP();
+  const style = order.style.trim();
+  const size  = (order.size||'').trim();
+  // Try "Style|Size" first (e.g. "Spell It Out|Kids")
+  const sizeWord = size.split(/\s+/)[0];
+  const sizeKey = sizeWord.charAt(0).toUpperCase()+sizeWord.slice(1).toLowerCase();
+  const fullKey = style+'|'+sizeKey;
+  if(tm[fullKey]) return tm[fullKey];
+  // Try exact size string
+  const fullKeyRaw = style+'|'+size;
+  if(tm[fullKeyRaw]) return tm[fullKeyRaw];
+  // Fallback: style only (for clients that don't use size in key)
+  if(tm[style]) return tm[style];
+  // Butterscotch: BB-121, LBB-121, XLBB-121 → fall back to SB-121
+  // All templates are stored under the SB prefix; larger sizes use scaling at render time.
+  if(order.sizePrefix && order.sizePrefix!=='SB'){
+    const designNum=style.replace(/^[^-]+-/,''); // "BB-121" -> "121"
+    const sbKey='SB-'+designNum;
+    if(tm[sbKey]) return tm[sbKey];
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Process All
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Core single-template render — used by BOTH the batch processor (processAll)
+// and the Quick Test tab. This is the ONLY place that turns a template mapping
+// + name + optional font override into a finished canvas. Keeping this single
+// source of truth guarantees Quick Test results always match real batch runs.
+// ─────────────────────────────────────────────────────────────────────────────
+async function renderOneTemplate(mapping, rawName, fontOverride, caseOverride, sizePrefix){
+  // Butterscotch size scaling — look up scale factors from the client's sizes table
+  // and apply them to both the canvas dimensions and all zone coordinates.
+  // Other clients have no sizes table so scaleX/scaleY default to 1.
+  let scaleX=1, scaleY=1, targetW=null, targetH=null;
+  if(sizePrefix && activeClient && CLIENT_REGISTRY[activeClient].sizes){
+    const sizeInfo=CLIENT_REGISTRY[activeClient].sizes[sizePrefix];
+    if(sizeInfo){scaleX=sizeInfo.scaleX;scaleY=sizeInfo.scaleY;targetW=sizeInfo.w;targetH=sizeInfo.h;}
+  }
+  const resolvedZones = mapping.zones.map(z=>{
+    // Apply font override if present
+    let zone=z;
+    if(fontOverride && lookupFont(fontOverride)) zone=Object.assign({},z,{font:fontOverride});
+    // Apply size scaling to all coordinate/dimension fields
+    if(scaleX!==1||scaleY!==1){
+      zone=Object.assign({},zone,{
+        cx: zone.cx!=null ? Math.round(zone.cx*scaleX) : null,
+        cy: Math.round(zone.cy*scaleY),
+        w:  Math.round(zone.w*scaleX),
+        h:  Math.round(zone.h*scaleY),
+      });
+      if(zone.forceMax) zone=Object.assign({},zone,{forceMax:Math.round(zone.forceMax*Math.min(scaleX,scaleY))});
+      if(zone.forceSize) zone=Object.assign({},zone,{forceSize:Math.round(zone.forceSize*Math.min(scaleX,scaleY))});
+      if(zone.rightEdge) zone=Object.assign({},zone,{rightEdge:Math.round(zone.rightEdge*scaleX)});
+      if(zone.bottomY) zone=Object.assign({},zone,{bottomY:Math.round(zone.bottomY*scaleY)});
+    }
+    return zone;
+  });
+  const mf=resolvedZones.find(z=>!lookupFont(z.font));
+  if(mf){ throw new Error(`Font not loaded: ${mf.font} (tried key: ${fontKey(mf.font)})`); }
+  if(!psdFiles[mapping.psd.toLowerCase().replace(/\s+/g,'_')]){ throw new Error(`PSD not loaded: ${mapping.psd}`); }
+
+  const sbCanvas=await psdToCanvas(psdFiles[mapping.psd.toLowerCase().replace(/\s+/g,'_')],mapping.psd);
+  // Scale up canvas if this is a larger size (BB, LBB, XLBB)
+  let canvas=sbCanvas;
+  if(targetW && targetH && (targetW!==sbCanvas.width || targetH!==sbCanvas.height)){
+    const scaled=document.createElement('canvas');
+    scaled.width=targetW; scaled.height=targetH;
+    const sctx2=scaled.getContext('2d');
+    sctx2.imageSmoothingEnabled=false; // nearest-neighbor upscale preserves pixel-art integrity
+    sctx2.drawImage(sbCanvas,0,0,targetW,targetH);
+    canvas=scaled;
+  }
+
+  // Pre-extract palette from BLANK canvas (before text) — used only to compute
+  // lightestColor/dkGreyColor sentinels, since those need to reflect the
+  // template's own colors, not the text we're about to add.
+  // Use frequency-based dominant colors (not every unique RGB) since BMP edge
+  // anti-aliasing produces dozens of near-duplicate greys that aren't real
+  // design colors and would otherwise corrupt the indexed export palette.
+  function extractDominantColors(ctx,w,h,maxColors){
+    const id=ctx.getImageData(0,0,w,h);
+    const d=id.data;
+    const counts=new Map();
+    for(let i=0;i<d.length;i+=4){
+      const key=`${d[i]},${d[i+1]},${d[i+2]}`;
+      counts.set(key,(counts.get(key)||0)+1);
+    }
+    const sorted=[...counts.entries()].sort((a,b)=>b[1]-a[1]);
+    const dominant=[];
+    const minPixels=Math.max(4,Math.floor((w*h)*0.002)); // ignore colors under 0.2% of pixels (AA noise)
+    for(const [key,count] of sorted){
+      if(count<minPixels && dominant.length>=2) continue; // always keep at least top 2
+      const rgb=key.split(',').map(Number);
+      // Merge into existing dominant color if very close (anti-alias remnant)
+      const isDup=dominant.some(c=>Math.abs(c[0]-rgb[0])<12&&Math.abs(c[1]-rgb[1])<12&&Math.abs(c[2]-rgb[2])<12);
+      if(!isDup) dominant.push(rgb);
+      if(dominant.length>=maxColors) break;
+    }
+    return dominant.sort((a,b)=>{
+      const la=0.299*a[0]+0.587*a[1]+0.114*a[2];
+      const lb=0.299*b[0]+0.587*b[1]+0.114*b[2];
+      return lb-la;
+    });
+  }
+
+  let blankPalette = mapping.palette||[];
+  if(mapping.autoPalette){
+    blankPalette = extractDominantColors(canvas.getContext('2d'),canvas.width,canvas.height,4);
+  }
+
+  // In2Green: use name exactly as provided in spreadsheet — no case conversion
+  // All other clients: convert to proper case as the baseline before zone flags apply
+  const baseName = activeClient==='In2Green'
+    ? rawName.trim()
+    : rawName.trim().charAt(0).toUpperCase()+rawName.trim().slice(1).toLowerCase();
+
+  // Compute lightest non-white color (for autoLightest sentinel [255,255,255,255])
+  const paletteForLightest = (activeClient==='In2Green')
+    ? blankPalette.filter(c=>!(c[0]===255&&c[1]===255&&c[2]===255))
+    : blankPalette;
+  const lightestColor = (paletteForLightest.length>0?paletteForLightest:blankPalette).reduce((a,b)=>{
+    const la=0.299*a[0]+0.587*a[1]+0.114*a[2];
+    const lb=0.299*b[0]+0.587*b[1]+0.114*b[2];
+    return la>=lb?a:b;
+  },[200,200,200]);
+
+  // Compute dk grey: darkest non-black color from the BLANK template
+  const paletteForDkGrey = blankPalette.filter(c=>!(c[0]<10&&c[1]<10&&c[2]<10));
+  const dkGreyColor = (paletteForDkGrey.length>0?paletteForDkGrey:blankPalette).reduce((a,b)=>{
+    const la=0.299*a[0]+0.587*a[1]+0.114*a[2];
+    const lb=0.299*b[0]+0.587*b[1]+0.114*b[2];
+    return la<=lb?a:b;
+  },[100,100,100]);
+  const usedTextColors=[];
+  for(const zone of resolvedZones){
+    let display;
+    if(caseOverride==='caps') display=baseName.toUpperCase();
+    else if(caseOverride==='lower') display=baseName.toLowerCase();
+    else if(caseOverride==='proper') display=baseName.charAt(0).toUpperCase()+baseName.slice(1).toLowerCase();
+    else if(activeClient==='In2Green') display=baseName; // use exactly as provided — no zone case flags
+    else display=zone.uppercase?baseName.toUpperCase():zone.lowercase?baseName.toLowerCase():baseName;
+    // Resolve color: 'dkgrey' → darkest non-black palette color; arrays used as-is
+    let resolvedColor;
+    if(zone.color==='dkgrey'){
+      resolvedColor=[dkGreyColor[0],dkGreyColor[1],dkGreyColor[2],255];
+    } else {
+      resolvedColor=zone.color;
+    }
+    usedTextColors.push([resolvedColor[0],resolvedColor[1],resolvedColor[2]]);
+    const enrichedZone=Object.assign({},zone,{antialias:!!mapping.antialias,palette:blankPalette,color:resolvedColor});
+    renderTextZone(canvas,display,enrichedZone,lookupFont(zone.font));
+  }
+
+  // Final palette for TIF export: dominant colors from the finished canvas (with text
+  // already drawn), guaranteeing the exact text color(s) are explicitly included so
+  // they never snap to an unrelated nearby shade during indexed-TIF quantization.
+  let finalPalette = mapping.palette||[];
+  if(mapping.autoPalette){
+    finalPalette = extractDominantColors(canvas.getContext('2d'),canvas.width,canvas.height,4);
+    for(const tc of usedTextColors){
+      const exists=finalPalette.some(c=>Math.abs(c[0]-tc[0])<12&&Math.abs(c[1]-tc[1])<12&&Math.abs(c[2]-tc[2])<12);
+      if(!exists) finalPalette.push(tc);
+    }
+    finalPalette.sort((a,b)=>{
+      const la=0.299*a[0]+0.587*a[1]+0.114*a[2];
+      const lb=0.299*b[0]+0.587*b[1]+0.114*b[2];
+      return lb-la;
+    });
+    // Hard cap at 4 — In2Green templates are always 4-color indexed designs.
+    // If the text color guarantee pushed us to 5, drop the least-dominant color
+    // (last after sorting lightest-first, so the most extreme end of the range).
+    if(finalPalette.length>4) finalPalette=finalPalette.slice(0,4);
+  }
+  return {canvas, palette:finalPalette};
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick Test Tab — calls the same renderOneTemplate() used by processAll().
+// Read-only: never writes to CLIENT_REGISTRY, never touches batch state.
+// ─────────────────────────────────────────────────────────────────────────────
+function qtPopulateTemplates(){
+  const sel=document.getElementById('qtTemplate');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Select a template —</option>';
+  const caseGroup=document.getElementById('qtCaseGroup');
+  if(caseGroup) caseGroup.style.display=(activeClient==='Butterscotch')?'block':'none';
+  const sizeGroup=document.getElementById('qtSizeGroup');
+  if(sizeGroup) sizeGroup.style.display=(activeClient==='Butterscotch')?'block':'none';
+  if(!activeClient || !CLIENT_REGISTRY[activeClient]) return;
+  const names=Object.keys(CLIENT_REGISTRY[activeClient].templates).sort();
+  for(const n of names){
+    const opt=document.createElement('option');
+    opt.value=n; opt.textContent=n;
+    sel.appendChild(opt);
+  }
+}
+
+function qtOnTemplateChange(){
+  const key=document.getElementById('qtTemplate').value;
+  const fontField=document.getElementById('qtFont');
+  if(!key || !activeClient){ fontField.placeholder='leave blank to use template default'; return; }
+  const mapping=CLIENT_REGISTRY[activeClient].templates[key];
+  const defaultFont=mapping.zones[0]?.font || '';
+  fontField.placeholder=`leave blank to use default: ${defaultFont}`;
+}
+
+let qtLastRender=null;
+
+function qtRedrawOverlay(){
+  if(!qtLastRender)return;
+  const {canvas, mapping}=qtLastRender;
+  const zoom=parseFloat(document.getElementById('qtZoom').value)||2;
+  const showGrid=document.getElementById('qtGridToggle').checked;
+  const showCrosshair=document.getElementById('qtCrosshairToggle').checked;
+
+  const out=document.getElementById('qtCanvas');
+  out.width=canvas.width*zoom;
+  out.height=canvas.height*zoom;
+  const ctx=out.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(canvas,0,0,canvas.width,canvas.height,0,0,out.width,out.height);
+
+  if(showGrid){
+    ctx.save();
+    ctx.strokeStyle='rgba(0,200,255,0.35)';
+    ctx.lineWidth=1;
+    ctx.font=`${Math.max(9,9*Math.min(zoom,2))}px monospace`;
+    ctx.fillStyle='rgba(0,200,255,0.9)';
+    for(let x=0;x<=canvas.width;x+=10){
+      ctx.beginPath();ctx.moveTo(x*zoom+0.5,0);ctx.lineTo(x*zoom+0.5,out.height);ctx.stroke();
+      if(x%50===0)ctx.fillText(String(x),x*zoom+2,10);
+    }
+    for(let y=0;y<=canvas.height;y+=10){
+      ctx.beginPath();ctx.moveTo(0,y*zoom+0.5);ctx.lineTo(out.width,y*zoom+0.5);ctx.stroke();
+      if(y%50===0)ctx.fillText(String(y),2,y*zoom+10);
+    }
+    ctx.restore();
+  }
+
+  if(showCrosshair && mapping.zones){
+    ctx.save();
+    ctx.strokeStyle='rgba(255,80,80,0.9)';
+    ctx.lineWidth=1.5;
+    ctx.font='11px monospace';
+    ctx.fillStyle='rgba(255,80,80,0.95)';
+    for(const z of mapping.zones){
+      const cx=z.cx*zoom, cy=z.cy*zoom;
+      ctx.beginPath();ctx.moveTo(cx-8,cy);ctx.lineTo(cx+8,cy);ctx.moveTo(cx,cy-8);ctx.lineTo(cx,cy+8);ctx.stroke();
+      ctx.fillText(`cx:${z.cx} cy:${z.cy}`,cx+10,cy-6);
+    }
+    ctx.restore();
+  }
+}
+
+async function runQuickTest(){
+  const key=document.getElementById('qtTemplate').value;
+  const name=document.getElementById('qtName').value.trim();
+  const fontOverride=document.getElementById('qtFont').value.trim();
+  const caseOverride=document.getElementById('qtCase')?document.getElementById('qtCase').value:'';
+  const qtSizeVal=document.getElementById('qtSize')?document.getElementById('qtSize').value:'SB';
+  const resultBox=document.getElementById('qtResult');
+  const btn=document.getElementById('qtBtn');
+
+  if(!activeClient){ log('Quick Test: select a client first','warn'); return; }
+  if(!key){ log('Quick Test: select a template first','warn'); return; }
+  if(!name){ log('Quick Test: enter a name to render','warn'); return; }
+
+  const mapping=CLIENT_REGISTRY[activeClient].templates[key];
+  btn.disabled=true; btn.textContent='RENDERING...';
+  try{
+    const {canvas, palette}=await renderOneTemplate(mapping, name, fontOverride||null, caseOverride||null, qtSizeVal||'SB');
+    qtLastRender={canvas, mapping, palette};
+    resultBox.style.display='block';
+    qtRedrawOverlay();
+
+    const tifBlob=new Blob([canvasToTIF(canvas,palette)],{type:'image/tiff'});
+    const url=URL.createObjectURL(tifBlob);
+    const dlWrap=document.getElementById('qtDownloadWrap');
+    dlWrap.innerHTML='';
+    const dl=document.createElement('a');
+    dl.href=url; dl.download=`TEST_${key}_${name}.tif`;
+    dl.className='dl-btn'; dl.textContent='⬇ DOWNLOAD TEST TIF';
+    dlWrap.appendChild(dl);
+
+    log(`Quick Test: ${key} / "${name}" rendered OK`,'ok');
+  }catch(err){
+    resultBox.style.display='none';
+    log(`Quick Test failed — ${err.message}`,'err');
+    alert(`Quick Test failed: ${err.message}`);
+  }
+  btn.disabled=false; btn.textContent='GENERATE TEST';
+}
+
+async function processAll(){
+  results=[];
+  const btn=document.getElementById('processBtn');
+  const pw=document.getElementById('progWrap');
+  const pf=document.getElementById('progFill');
+  const pt=document.getElementById('progText');
+  const old=document.getElementById('dlBtn');if(old)old.remove();
+  btn.disabled=true;btn.textContent='PROCESSING...';pw.style.display='block';
+  const zip=new JSZip();let created=0,skipped=0;
+  const usedNames={};
+
+  log(`Client: ${activeClient||'NONE'}`,'info');
+  log(`Loaded PSDs: ${Object.keys(psdFiles).join(', ')||'NONE'}`,'info');
+  log(`Loaded Fonts: ${Object.keys(fontFaces).join(', ')||'NONE'}`,'info');
+  log(`Order styles: ${[...new Set(orders.map(o=>o.style+' / '+o.size))].join(', ')||'NONE'}`,'info');
+
+  for(let i=0;i<orders.length;i++){
+    const o=orders[i];
+    pf.style.width=Math.round(i/orders.length*100)+'%';
+    pt.textContent=`Processing ${i+1} of ${orders.length}...`;
+    setRow(i,'processing');
+    const baseName_=`${o.orderNum}_${o.name}`;
+    usedNames[baseName_]=(usedNames[baseName_]||0)+1;
+    const outName=usedNames[baseName_]===1?`${baseName_}.tif`:`${baseName_}_${usedNames[baseName_]}.tif`;
+    const mapping=getTemplate(o);
+    if(!mapping){setRow(i,'skipped',`No template for "${o.style} / ${o.size}"`);results.push({status:'skipped',reason:`No template for "${o.style} / ${o.size}"`});log(`⚠ Skipped ${outName} — no template for "${o.style} / ${o.size}"`,'warn');skipped++;continue;}
+    try{
+      const normalizedCase = (o.caseMode||'').toLowerCase().includes('cap') ? 'caps'
+        : (o.caseMode||'').toLowerCase().includes('low') ? 'lower'
+        : (o.caseMode||'').toLowerCase().includes('proper') ? 'proper'
+        : null;
+      const {canvas, palette}=await renderOneTemplate(mapping, o.name, o.font, normalizedCase, o.sizePrefix||'SB');
+      zip.file(outName,canvasToTIF(canvas,palette));
+      setRow(i,'created');results.push({status:'created'});log(`✅ ${outName}`,'ok');created++;
+    }catch(err){
+      const isMissing = /not loaded/.test(err.message);
+      if(isMissing){setRow(i,'skipped',err.message);results.push({status:'skipped',reason:err.message});log(`⚠ Skipped ${outName} — ${err.message}`,'warn');skipped++;}
+      else{setRow(i,'error',err.message);results.push({status:'error',reason:err.message});log(`❌ ${outName} — ${err.message}`,'err');}
+    }
+    await new Promise(r=>setTimeout(r,0));updateStats();
+  }
+
+  pf.style.width='100%';pt.textContent=`Done — ${created} created, ${skipped} skipped`;
+  const rpt=[`BaubleBar Personalization Run`,`Date: ${new Date().toLocaleString()}`,'─'.repeat(50),`Total Kids orders : ${orders.length}`,`✅ TIFs created   : ${created}`,`⚠  Skipped        : ${skipped}`,``];
+  orders.forEach((o,idx)=>{if(results[idx]?.status==='skipped')rpt.push(`  - ${o.orderNum}_${o.name}.tif  →  ${results[idx].reason||''}`);});
+  zip.file('REPORT.txt',rpt.join('\n'));
+  if(created>0){
+    const blob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(blob);
+    const fname=`${window.spreadsheetBaseName||'BaubleBar_TIFs_'+new Date().toISOString().slice(0,10)}.zip`;
+    const a=document.createElement('a');a.href=url;a.download=fname;a.style.display='none';
+    document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),2000);
+    const dl=document.createElement('a');dl.id='dlBtn';dl.href=url;dl.download=fname;
+    dl.className='dl-btn';dl.textContent=`⬇ DOWNLOAD ZIP — ${created} TIF${created>1?'s':''}`;
+    document.getElementById('progWrap').insertAdjacentElement('afterend',dl);
+    log(`📦 ZIP ready — ${created} TIFs`,'ok');
+  }
+  btn.disabled=false;btn.textContent='PROCESS ALL ORDERS';updateStats();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calibration Tab
+// ─────────────────────────────────────────────────────────────────────────────
+let calBlankData=null,calBlankName='',calFinishedData=null,calFinishedName='';
+
+function calLoadBlank(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{calBlankData=e.target.result;calBlankName=file.name;document.getElementById('calBlankName').textContent=file.name;checkCalReady();};
+  r.readAsArrayBuffer(file);
+}
+
+function calLoadFinished(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{calFinishedData=e.target.result;calFinishedName=file.name;document.getElementById('calFinishedName').textContent=file.name;checkCalReady();};
+  r.readAsArrayBuffer(file);
+}
+
+function checkCalReady(){
+  document.getElementById('calBtn').disabled=!(calBlankData&&calFinishedData&&document.getElementById('calStyleName').value.trim());
+}
+document.getElementById('calStyleName').addEventListener('input',checkCalReady);
+
+async function runCalibration(){
+  const styleName=document.getElementById('calStyleName').value.trim();
+  const sampleName=document.getElementById('calSampleName').value.trim().toLowerCase();
+  const fontFile=document.getElementById('calFontFile').value.trim();
+
+  // Load both images
+  const blankImg=await loadImageFromBuffer(calBlankData,calBlankName);
+  const finImg=await loadImageFromBuffer(calFinishedData,calFinishedName);
+
+  const bArr=getPixels(blankImg);
+  const fArr=getPixels(finImg);
+  const w=blankImg.width,h=blankImg.height;
+
+  // Get finished palette
+  const finColors=getUniqueColors(fArr,w,h);
+  const palette=finColors.map(c=>[c.r,c.g,c.b]);
+
+  // Find zones: colors that appear in finished but not (or fewer) in blank
+  const zones=[];
+  for(const fc of finColors){
+    if(fc.r===255&&fc.g===255&&fc.b===255)continue; // skip white
+    const added=findAddedPixels(bArr,fArr,w,h,fc.r,fc.g,fc.b);
+    if(added.length<20)continue;
+    // Split into clusters
+    const clusters=clusterPixels(added,w,h);
+    for(const cluster of clusters){
+      if(cluster.length<10)continue;
+      const xs=cluster.map(p=>p%w);
+      const ys=cluster.map(p=>Math.floor(p/w));
+      const l=Math.min(...xs),r2=Math.max(...xs),t=Math.min(...ys),b2=Math.max(...ys);
+      const cx=Math.round((l+r2)/2),cy=Math.round((t+b2)/2);
+      const zw=r2-l,zh=b2-t;
+      // Estimate angle from pixel regression
+      const angle=estimateAngle(xs,ys);
+      zones.push({cx,cy,w:zw,h:zh,angle:Math.round(angle*10)/10,color:[fc.r,fc.g,fc.b,255]});
+    }
+  }
+
+  // Generate config
+  const psdName=document.getElementById('calBlankName').textContent;
+  const config={
+    psd:psdName,
+    palette,
+    zones:zones.map(z=>({
+      font:fontFile||'YOUR_FONT.TTF',
+      cx:z.cx,cy:z.cy,w:z.w,h:z.h,
+      angle:z.angle,
+      color:z.color,
+      mode: Math.abs(z.angle)>20?'diag':'fit'
+    }))
+  };
+
+  const code=`'${styleName}': ${JSON.stringify(config,null,2)}`;
+  document.getElementById('calCode').textContent=code;
+  document.getElementById('calResult').style.display='block';
+}
+
+function loadImageFromBuffer(buffer,filename){
+  return new Promise(res=>{
+    const ext=(filename||'').split('.').pop().toLowerCase();
+    const mime=ext==='bmp'?'image/bmp':ext==='png'?'image/png':ext==='jpg'||ext==='jpeg'?'image/jpeg':'image/tiff';
+    const blob=new Blob([buffer],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);res(c);
+    };
+    img.src=url;
+  });
+}
+
+function getPixels(canvas){return canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;}
+
+function getUniqueColors(data,w,h){
+  const map={};
+  for(let i=0;i<w*h;i++){
+    const r=data[i*4],g=data[i*4+1],b=data[i*4+2];
+    const k=`${r},${g},${b}`;
+    if(!map[k])map[k]={r,g,b,count:0};
+    map[k].count++;
+  }
+  return Object.values(map).sort((a,b)=>b.count-a.count);
+}
+
+function findAddedPixels(bArr,fArr,w,h,r,g,b){
+  const added=[];
+  for(let i=0;i<w*h;i++){
+    const fi=i*4;
+    if(fArr[fi]===r&&fArr[fi+1]===g&&fArr[fi+2]===b){
+      if(!(bArr[fi]===r&&bArr[fi+1]===g&&bArr[fi+2]===b))added.push(i);
+    }
+  }
+  return added;
+}
+
+function clusterPixels(pixels,w,h){
+  if(!pixels.length)return[];
+  const rowMap={};
+  for(const p of pixels){const y=Math.floor(p/w);if(!rowMap[y])rowMap[y]=[];rowMap[y].push(p);}
+  const rows=Object.keys(rowMap).map(Number).sort((a,b)=>a-b);
+  const clusters=[];let current=[rows[0]];
+  for(let i=1;i<rows.length;i++){
+    if(rows[i]-rows[i-1]>15){clusters.push(current);current=[rows[i]];}
+    else current.push(rows[i]);
+  }
+  clusters.push(current);
+  return clusters.map(rs=>rs.flatMap(r=>rowMap[r]));
+}
+
+function estimateAngle(xs,ys){
+  if(xs.length<2)return 0;
+  const n=xs.length;
+  const mx=xs.reduce((a,b)=>a+b,0)/n;
+  const my=ys.reduce((a,b)=>a+b,0)/n;
+  let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);den+=(xs[i]-mx)**2;}
+  if(den===0)return 0;
+  return Math.atan(num/den)*180/Math.PI;
+}
+
+function copyCalResult(){
+  navigator.clipboard.writeText(document.getElementById('calCode').textContent);
+  const btn=document.querySelector('.copy-btn');btn.textContent='COPIED!';
+  setTimeout(()=>btn.textContent='COPY',2000);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Google Auth + Whitelist + Drive Sync
+// ─────────────────────────────────────────────────────────────────────────────
+let gAccessToken = null;
+let tokenRefreshTimer = null;
+const TOKEN_LIFETIME_MS = 55 * 60 * 1000; // refresh every 55 min (token lasts 60)
+
+function scheduleTokenRefresh(){
+  if(tokenRefreshTimer) clearTimeout(tokenRefreshTimer);
+  tokenRefreshTimer = setTimeout(()=>{
+    if(tokenClient){
+      log('Refreshing access token…','info');
+      tokenClient.requestAccessToken();
+    }
+  }, TOKEN_LIFETIME_MS);
+}
+let gUserEmail   = null;
+let gUserName    = null;
+let gUserPic     = null;
+let tokenClient  = null;
+
+const isConfigured = () =>
+  GOOGLE_CONFIG.CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com' &&
+  GOOGLE_CONFIG.WHITELIST_SHEET !== 'YOUR_SHEET_ID';
+
+function setAuthStatus(msg, type=''){
+  const el = document.getElementById('authStatus');
+  el.textContent = msg;
+  el.className = 'auth-status' + (type ? ' '+type : '');
+}
+
+function showApp(){
+  document.getElementById('authOverlay').classList.add('hidden');
+  if(gUserName){
+    document.getElementById('headerUserChip').style.display='flex';
+    document.getElementById('headerAvatar').src = gUserPic||'';
+    document.getElementById('headerName').textContent = gUserName;
+  }
+  // Show client selector
+  document.getElementById('clientBar').style.display='flex';
+  populateClientSelector();
+}
+
+function signOut(){
+  try{ google.accounts.id.disableAutoSelect(); }catch(e){}
+  gAccessToken=null; gUserEmail=null; gUserName=null; gUserPic=null;
+  if(tokenRefreshTimer){ clearTimeout(tokenRefreshTimer); tokenRefreshTimer=null; }
+  document.getElementById('authOverlay').classList.remove('hidden');
+  document.getElementById('authUserChip').style.display='none';
+  document.getElementById('googleSignInBtn').style.display='block';
+  document.getElementById('headerUserChip').style.display='none';
+  setAuthStatus('Signed out. Sign in to continue.');
+}
+
+async function checkWhitelist(email){
+  if(!isConfigured()) return true;
+  try{
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_CONFIG.WHITELIST_SHEET}/values/A:A`,{
+      headers:{ Authorization:`Bearer ${gAccessToken}` }
+    });
+    if(!r.ok){
+      const errText = await r.text();
+      console.error('Whitelist sheet error:', r.status, errText);
+      setAuthStatus(`Whitelist read failed (${r.status}) — contact your administrator.`,'err');
+      return false;
+    }
+    const d = await r.json();
+    console.log('Whitelist raw response:', JSON.stringify(d));
+    const emails = (d.values||[]).flat().map(e=>e.trim().toLowerCase());
+    console.log('Whitelist emails found:', emails);
+    console.log('Checking against:', email.toLowerCase());
+    return emails.includes(email.toLowerCase());
+  }catch(e){
+    console.error('Whitelist check failed:',e);
+    setAuthStatus(`Whitelist check error: ${e.message}`,'err');
+    return false;
+  }
+}
+
+async function onGoogleCredential(response){
+  // Decode the JWT id_token to get user info
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  gUserEmail = payload.email;
+  gUserName  = payload.name;
+  gUserPic   = payload.picture;
+
+  setAuthStatus(`Checking access for ${gUserEmail}…`);
+
+  // Now get an access token for Drive/Sheets
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CONFIG.CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets.readonly',
+    callback: async (tokenResponse) => {
+      if(tokenResponse.error){ setAuthStatus('Authorization failed: '+tokenResponse.error,'err'); return; }
+      gAccessToken = tokenResponse.access_token;
+      scheduleTokenRefresh(); // auto-refresh before token expires
+
+      const allowed = await checkWhitelist(gUserEmail);
+      if(!allowed){
+        setAuthStatus(`Access denied — ${gUserEmail} is not on the approved list.`,'err');
+        document.getElementById('authUserChip').style.display='flex';
+        document.getElementById('authAvatar').src = gUserPic||'';
+        document.getElementById('authNameLabel').textContent = gUserName + ' (' + gUserEmail + ')';
+        document.getElementById('googleSignInBtn').style.display='none';
+        return;
+      }
+
+      document.getElementById('syncBtn').disabled = false;
+      showApp();
+      log(`Signed in as ${gUserEmail}`,'ok');
+      setDriveStatus('Signed in — ready to sync assets from Drive');
+      await syncFromDrive();
+    },
+    prompt: ''
+  });
+  tokenClient.requestAccessToken();
+}
+
+function initGoogleAuth(){
+  if(!isConfigured()){
+    document.getElementById('setupBanner').classList.add('visible');
+    document.getElementById('authOverlay').classList.add('hidden'); // bypass for dev
+    document.getElementById('driveBar').style.display='none';
+    document.getElementById('clientBar').style.display='flex';
+    populateClientSelector();
+    log('⚠ Google config not set — running in local-only mode','warn');
+    return;
+  }
+  try{
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CONFIG.CLIENT_ID,
+      callback: onGoogleCredential,
+      auto_select: true,
+    });
+    google.accounts.id.renderButton(
+      document.getElementById('googleSignInBtn'),
+      { theme:'filled_black', size:'large', text:'signin_with', shape:'rectangular' }
+    );
+    google.accounts.id.prompt();
+    setAuthStatus('Sign in with your Google account to continue.');
+  }catch(e){
+    setAuthStatus('Failed to load Google Sign-In: '+e.message,'err');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Client Selector
+// ─────────────────────────────────────────────────────────────────────────────
+function populateClientSelector(){
+  const sel = document.getElementById('clientSelect');
+  sel.innerHTML = '<option value="">— Select a client —</option>';
+  for(const [key, cfg] of Object.entries(CLIENT_REGISTRY)){
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = cfg.label;
+    sel.appendChild(opt);
+  }
+}
+
+function selectClient(key){
+  activeClient = key || null;
+  // Clear orders and assets when switching clients
+  orders = []; psdFiles = {}; fontFaces = {}; results = [];
+  document.getElementById('xlsxPills').innerHTML='';
+  document.getElementById('filePills').innerHTML='';
+  document.getElementById('cachedBar').style.display='none';
+  document.getElementById('tableContainer').innerHTML='<div class="empty"><div class="ei">📋</div><div class="et">Upload spreadsheet to see orders</div></div>';
+  document.getElementById('tableMeta').textContent='No orders loaded';
+  updateStats(); checkReady();
+
+  if(!key){ document.getElementById('clientBadge').textContent=''; document.getElementById('sizeBadge').textContent=''; qtPopulateTemplates(); return; }
+  const cfg = CLIENT_REGISTRY[key];
+  document.getElementById('clientBadge').textContent = Object.keys(cfg.templates).length + ' templates configured';
+  document.getElementById('sizeBadge').textContent = key.toUpperCase();
+  qtPopulateTemplates();
+
+  // Clear IndexedDB and sync fresh assets for this client
+  dbClearAll().then(()=>{
+    log(`Client switched to ${cfg.label} — syncing assets…`,'info');
+    syncFromDrive();
+  });
+}
+
+function setDriveStatus(msg){
+  document.getElementById('driveStatusText').textContent = msg;
+}
+
+async function syncFromDrive(){
+  if(!gAccessToken){ log('Not signed in — cannot sync from Drive','warn'); return; }
+  if(!activeClient){ log('Select a client first','warn'); return; }
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.textContent = '⟳ SYNCING…';
+  setDriveStatus('Contacting Drive…');
+  log('Syncing assets from Google Drive…','info');
+
+  try{
+    const clientCfg = CLIENT_REGISTRY[activeClient];
+    const folderID = clientCfg ? clientCfg.driveFolder : null;
+    if(!folderID || folderID.startsWith('YOUR_')){
+      log('Drive folder not configured for '+activeClient,'warn');
+      setDriveStatus('Drive folder not configured for this client');
+      btn.disabled=false; btn.textContent='⟳ SYNC FROM DRIVE'; return;
+    }
+
+    // ── 1. List all files in folder ──────────────────────────────────────────
+    const listUrl = `https://www.googleapis.com/drive/v3/files?q='${folderID}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime)&pageSize=500`;
+    const lr = await fetch(listUrl,{ headers:{ Authorization:`Bearer ${gAccessToken}` } });
+    if(!lr.ok) throw new Error('Drive list failed: '+lr.status);
+    const listing = await lr.json();
+    const files = (listing.files||[]).filter(f=>{
+      const ext = f.name.split('.').pop().toLowerCase();
+      return ['psd','bmp','ttf','otf'].includes(ext);
+    });
+    if(!files.length){
+      setDriveStatus('No PSD/BMP/font files found in Drive folder');
+      btn.disabled=false; btn.textContent='⟳ SYNC FROM DRIVE'; return;
+    }
+
+    // ── 2. Build cache index keyed by filename ───────────────────────────────
+    const cached = await dbGetAll();
+    const cacheIndex = {};
+    cached.forEach(c => { cacheIndex[c.name] = c.modifiedTime || null; });
+
+    // ── 3. Determine which files need downloading ────────────────────────────
+    const toDownload = files.filter(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      const nk = (['psd','bmp'].includes(ext))
+        ? f.name.toLowerCase().replace(/\s+/g,'_')
+        : f.name.replace(/\s+/g,'_');
+      return cacheIndex[nk] !== f.modifiedTime;
+    });
+
+    const upToDate = files.length - toDownload.length;
+    if(!toDownload.length){
+      // Everything cached and current — just reload from IndexedDB
+      await loadCache();
+      const msg = `All ${files.length} assets up to date — loaded from cache`;
+      setDriveStatus('☁ '+msg); log(msg,'ok');
+      btn.disabled=false; btn.textContent='⟳ SYNC FROM DRIVE'; return;
+    }
+
+    log(`${upToDate} assets up to date · downloading ${toDownload.length} new/changed…`,'info');
+
+    // ── 4. Parallel download with concurrency limit of 10 ───────────────────
+    const CONCURRENCY = 10;
+    let p=0, f=0, errCount=0, done=0;
+
+    async function downloadOne(file){
+      try{
+        const ext = file.name.split('.').pop().toLowerCase();
+        setDriveStatus(`Syncing ${++done} of ${toDownload.length}…`);
+        const dlUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+        const dr = await fetch(dlUrl,{ headers:{ Authorization:`Bearer ${gAccessToken}` } });
+        if(!dr.ok){ log(`⚠ Could not download ${file.name}`,'warn'); errCount++; return; }
+        const buf = await dr.arrayBuffer();
+        if(ext==='psd'||ext==='bmp'){
+          const nk = file.name.toLowerCase().replace(/\s+/g,'_');
+          psdFiles[nk]=buf;
+          await dbPut({name:nk,type:'psd',data:buf,modifiedTime:file.modifiedTime});
+          p++;
+        } else if(['ttf','otf'].includes(ext)){
+          const nk = file.name.replace(/\s+/g,'_');
+          await registerFont(nk,buf);
+          await dbPut({name:nk,type:'font',data:buf,modifiedTime:file.modifiedTime});
+          f++;
+        }
+      }catch(fe){ log(`⚠ Error syncing ${file.name}: ${fe.message}`,'warn'); errCount++; }
+    }
+
+    // Run in batches of CONCURRENCY
+    for(let i=0; i<toDownload.length; i+=CONCURRENCY){
+      const batch = toDownload.slice(i, i+CONCURRENCY);
+      await Promise.all(batch.map(downloadOne));
+    }
+
+    renderFileStatus(); checkReady();
+    const msg = `Sync complete — ${p} template${p!==1?'s':''}, ${f} font${f!==1?'s':''}` +
+                (upToDate ? ` · ${upToDate} unchanged` : '') +
+                (errCount ? ` · ${errCount} errors` : '');
+    setDriveStatus('☁ '+msg);
+    log(msg,'ok');
+
+  }catch(e){
+    log('Drive sync error: '+e.message,'err');
+    setDriveStatus('Sync failed — see log');
+  }
+
+  btn.disabled=false;
+  btn.textContent='⟳ SYNC FROM DRIVE';
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Work Password Login (alternative to Google Sign-In)
+// ─────────────────────────────────────────────────────────────────────────────
+const WORK_PASSWORD = 'mineola2025';
+function checkWorkPw(){
+  const val = document.getElementById('workPwInput').value;
+  if(val === WORK_PASSWORD){
+    document.getElementById('workPwErr').style.display='none';
+    gUserName = 'Staff';
+    gUserEmail = 'staff@mineola';
+    gUserPic = '';
+    showApp();
+    log('Signed in with work password','ok');
+  } else {
+    document.getElementById('workPwErr').style.display='block';
+    document.getElementById('workPwInput').value='';
+    document.getElementById('workPwInput').focus();
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────────────────────
+(async()=>{
+  await openDB();
+  await loadCache();
+  checkReady();
+  // Wait for Google Identity Services to load then init auth
+  const waitForGIS = setInterval(()=>{
+    if(window.google?.accounts?.id){
+      clearInterval(waitForGIS);
+      initGoogleAuth();
+    }
+  }, 100);
+  setTimeout(()=>{ clearInterval(waitForGIS); if(!isConfigured()) return; setAuthStatus('Google Sign-In failed to load — check your internet connection.','err'); },10000);
+})();
+</script>
+
+<!-- ── ADMIN PASSWORD OVERLAY ── -->
+<div id="adminOverlay" class="">
+  <div id="adminBox">
+    <h2>ADMIN ACCESS</h2>
+    <input type="password" id="adminPwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkAdminPw()">
+    <div id="adminPwErr" style="display: none;">Incorrect password. Try again.</div>
+    <div class="admin-pw-btns">
+      <button id="adminPwOk" onclick="checkAdminPw()">UNLOCK</button>
+      <button id="adminPwCancel" onclick="closeAdminOverlay()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN TAB ── -->
+<div class="tab-content" id="tab-admin">
+  <div class="admin-hdr">
+    TEMPLATE CALIBRATION
+    <select class="admin-client-sel" id="adminClientSel" onchange="renderAdminPanel()"><option value="BaubleBar">BaubleBar</option><option value="In2Green">In2Green</option><option value="Butterscotch">Butterscotch</option></select>
+  </div>
+  <div id="adminCards"></div>
+  <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+    <button class="export-btn" onclick="exportAdminHtml()">⬇ EXPORT UPDATED index.html</button>
+    <span class="admin-note">Push the exported file to GitHub to go live.</span>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+const ADMIN_PASSWORD = 'knit2025';
+let adminUnlocked = false;
+
+function promptAdminLogin(){
+  if(adminUnlocked){ switchTab('admin'); return; }
+  document.getElementById('adminOverlay').classList.add('open');
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwErr').style.display='none';
+  setTimeout(()=>document.getElementById('adminPwInput').focus(),100);
+}
+
+function closeAdminOverlay(){
+  document.getElementById('adminOverlay').classList.remove('open');
+}
+
+function checkAdminPw(){
+  const val = document.getElementById('adminPwInput').value;
+  if(val === ADMIN_PASSWORD){
+    adminUnlocked = true;
+    closeAdminOverlay();
+    switchTab('admin');
+    populateAdminClientSel();
+    renderAdminPanel();
+  } else {
+    document.getElementById('adminPwErr').style.display='block';
+    document.getElementById('adminPwInput').value='';
+    document.getElementById('adminPwInput').focus();
+  }
+}
+
+function populateAdminClientSel(){
+  const sel = document.getElementById('adminClientSel');
+  sel.innerHTML = Object.keys(CLIENT_REGISTRY).map(k=>`<option value="${k}">${k}</option>`).join('');
+  if(activeClient) sel.value = activeClient;
+}
+
+function renderAdminPanel(){
+  const sel = document.getElementById('adminClientSel');
+  const clientKey = sel.value;
+  if(!clientKey) return;
+  const templates = CLIENT_REGISTRY[clientKey].templates;
+  const container = document.getElementById('adminCards');
+  container.innerHTML = '';
+
+  Object.entries(templates).forEach(([key, tmpl])=>{
+    const card = document.createElement('div');
+    card.className = 'tmpl-card';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'tmpl-card-hdr';
+    hdr.innerHTML = `<span>${key}</span><span style="font-size:10px;color:var(--muted)">▼</span>`;
+    hdr.onclick = ()=> body.classList.toggle('open');
+
+    const body = document.createElement('div');
+    body.className = 'tmpl-card-body';
+
+    tmpl.zones.forEach((zone, zi)=>{
+      if(zi > 0){
+        const div = document.createElement('hr');
+        div.className = 'zone-divider';
+        body.appendChild(div);
+        const zl = document.createElement('div');
+        zl.style.cssText='width:100%;font-family:DM Mono,monospace;font-size:9px;color:var(--muted);';
+        zl.textContent = `ZONE ${zi+1}`;
+        body.appendChild(zl);
+      }
+
+      const params = [
+        {label:'CX', field:'cx'},
+        {label:'CY', field:'cy'},
+        {label:'W (max width)', field:'w'},
+        {label:'H (max height)', field:'h'},
+        {label:'forceSize (lock font px)', field:'forceSize'},
+        {label:'forceMin (min font px)', field:'forceMin'},
+        {label:'rightEdge', field:'rightEdge'},
+        {label:'hCrop', field:'hCrop'},
+      ];
+
+      params.forEach(({label, field})=>{
+        if(!(field in zone) && field !== 'forceMin' && field !== 'rightEdge' && field !== 'hCrop') return;
+        if(!(field in zone)) return; // skip optional fields not present
+        const pg = document.createElement('div');
+        pg.className = 'param-group';
+        pg.innerHTML = `<span class="param-label">${label}</span>
+          <input class="param-input" type="number" value="${zone[field]}"
+            data-client="${clientKey}" data-key="${key}" data-zone="${zi}" data-field="${field}"
+            onchange="applyParamChange(this)">`;
+        body.appendChild(pg);
+      });
+    });
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+}
+
+function applyParamChange(input){
+  const {client, key, zone, field} = input.dataset;
+  const val = parseFloat(input.value);
+  if(isNaN(val)) return;
+  CLIENT_REGISTRY[client].templates[key].zones[parseInt(zone)][field] = val;
+}
+
+function exportAdminHtml(){
+  fetch(location.href)
+    .then(r=>r.text())
+    .then(html=>{
+      // For each template, rewrite zones:[...] directly in source
+      Object.entries(CLIENT_REGISTRY).forEach(([ck, client])=>{
+        Object.entries(client.templates).forEach(([tk, tmpl])=>{
+          const keyStr = "'" + tk + "':{";
+          const keyIdx = html.indexOf(keyStr);
+          if(keyIdx === -1) return;
+          const zonesIdx = html.indexOf('zones:[', keyIdx);
+          if(zonesIdx === -1) return;
+          let depth = 0, i = zonesIdx + 7;
+          for(; i < html.length; i++){
+            if(html[i] === '[') depth++;
+            else if(html[i] === ']'){ if(depth === 0) break; depth--; }
+          }
+          const newZonesArr = tmpl.zones.map(z=>{
+            const parts = [];
+            parts.push("font:'" + z.font + "'");
+            parts.push('cx:' + z.cx);
+            parts.push('cy:' + z.cy);
+            parts.push('w:' + z.w);
+            parts.push('h:' + z.h);
+            if(z.hCrop      !== undefined) parts.push('hCrop:'     + z.hCrop);
+            if(z.hCropBias  !== undefined) parts.push('hCropBias:' + z.hCropBias);
+            parts.push('angle:' + z.angle);
+            parts.push('color:[' + z.color.join(',') + ']');
+            parts.push("mode:'" + z.mode + "'");
+            if(z.uppercase  !== undefined) parts.push('uppercase:' + z.uppercase);
+            if(z.forceSize  !== undefined) parts.push('forceSize:' + z.forceSize);
+            if(z.forceMin   !== undefined) parts.push('forceMin:'  + z.forceMin);
+            if(z.rightEdge  !== undefined) parts.push('rightEdge:' + z.rightEdge);
+            if(z.flip       !== undefined) parts.push('flip:'      + z.flip);
+            return '{' + parts.join(',') + '}';
+          });
+          const newZones = 'zones:[' + newZonesArr.join(',') + ']';
+          html = html.slice(0, zonesIdx) + newZones + html.slice(i+1);
+        });
+      });
+      const blob = new Blob([html],{type:'text/html'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'index.html';
+      a.click();
+    })
+    .catch(e=>alert('Export failed — make sure you are on GitHub Pages, not a local file.'));
+}
+
 </script>
 </body>
 </html>
